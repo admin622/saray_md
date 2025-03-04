@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</title>
+  <!-- jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <!-- Toastr CSS və JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <!-- html5-qrcode kitabxanası -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .container { padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+    #scannedList { margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    #reader { width: 300px; margin: 20px auto; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1>
+  </header>
+  <div class="container">
+    <button id="scanBtn">BR kod oxut</button>
+    <div id="reader"></div>
+    <div id="scannedList">
+      <h3>Oxunan BR kodlar</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Sıra</th>
+            <th>BR kod</th>
+            <th>Tarix & Saat</th>
+          </tr>
+        </thead>
+        <tbody id="codeTableBody">
+          <!-- Oxunan kodlar burada göstəriləcək -->
+        </tbody>
+      </table>
+    </div>
+    <button onclick="window.location.href='report.html'">Hesabat Səhifəsi</button>
+  </div>
+
+  <script>
+    // Əgər login olunmayıbsa, login səhifəsinə yönləndiririk (opsional)
+    if(sessionStorage.getItem("loggedIn") !== "true"){
+      window.location.href = "login.html";
+    }
+
+    let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
+
+    // Cədvəli yenidən render edən funksiya
+    function renderTable() {
+      const tbody = document.getElementById('codeTableBody');
+      tbody.innerHTML = "";
+      scannedCodes.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item.code}</td>
+          <td>${item.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderTable();
+
+    let html5QrCode;
+    const scanBtn = document.getElementById('scanBtn');
+
+    // Google Sheets-ə məlumat göndərən funksiya
+    function syncToGoogleSheets(data) {
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzPpWe7bZR1stYb4MsUyMqcoGQXrlJQRE5teA0SrjC3n9bLBFqv1ahA06DWiZvB-VH1UQ/exec";
+      $.ajax({
+        url: scriptURL,
+        method: "POST",
+        data: JSON.stringify(data),
+        contentType: "application/json",
+        success: function(response) {
+          console.log("Data synced to Google Sheets:", response);
+          toastr.success("Məlumat Google Sheets-ə göndərildi!");
+        },
+        error: function(err) {
+          console.error("Sync error:", err);
+          toastr.error("Google Sheets-ə göndərmə zamanı xəta baş verdi!");
+        }
+      });
+    }
+
+    scanBtn.addEventListener('click', function() {
+      const readerElem = document.getElementById('reader');
+      readerElem.style.display = 'block';
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: 250 };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+          // Uğurlu oxunandan sonra scanning dayandırılır
+          html5QrCode.stop().then(() => {
+            readerElem.style.display = 'none';
+          }).catch(err => {
+            console.error(err);
+          });
+
+          // Eyni kodun təkrar oxunmasının qarşısını alırıq
+          if(scannedCodes.some(item => item.code === decodedText)){
+            alert("Bu BR kod artıq oxunub!");
+            return;
+          }
+
+          // Tarix & Saat
+          const now = new Date();
+          const timestamp = now.toLocaleString();
+
+          // LocalStorage-ə əlavə edirik
+          const newItem = { code: decodedText, timestamp: timestamp };
+          scannedCodes.push(newItem);
+          localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
+          renderTable();
+
+          // Google Sheets-ə göndərmək üçün nümunəvi data obyekti:
+          // Bu hissəni real ehtiyaclarınıza uyğun dəyişə bilərsiniz (Növü, Tay_nömrəsi, Çəki, Sıra və s.)
+          const dataForSheet = {
+            Növü: "Naməlum",          // BR koddan parse edəcəyiniz və ya əlavə soruşacağınız məlumat
+            Tay_nömrəsi: decodedText, // Məsələn, decodedText-i tay nömrəsi kimi qəbul edirik
+            Çəki: "50",               // Demo məqsədi üçün sabit 50 yazdıq
+            Sıra: "1",                // Demo məqsədi üçün sabit 1 yazdıq
+            Tarix_və_saat: timestamp
+          };
+          syncToGoogleSheets(dataForSheet);
+
+        },
+        (errorMessage) => {
+          console.log(`Kod oxunmadı: ${errorMessage}`);
+        }
+      ).catch(err => {
+        console.error(err);
+      });
+    });
+    function generateBarcodeSVG(value) {
+  let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  JsBarcode(svg, value, { format: "CODE128", width: 2, height: 40, displayValue: true });
+  return svg.outerHTML;
+}
+
+  </script>
+</body>
+</html>

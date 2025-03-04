@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hesabat - Zaqatala Agro Industry MMC</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .container { padding: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    button { padding: 10px 20px; margin: 10px 0; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hesabat - Zaqatala Agro Industry MMC</h1>
+  </header>
+  <div class="container">
+    <table>
+      <thead>
+        <tr>
+          <th>Sıra</th>
+          <th>BR kod</th>
+          <th>Tarix & Saat</th>
+        </tr>
+      </thead>
+      <tbody id="reportTableBody">
+        <!-- Hesabat məlumatları burada yüklənəcək -->
+      </tbody>
+    </table>
+    <button onclick="window.location.href='main.html'">Əsas Səhifəyə Qayıt</button>
+  </div>
+  <script>
+    let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
+    const tbody = document.getElementById('reportTableBody');
+    scannedCodes.forEach((item, index) => {
+      const tr = document.createElement('tr');
+      const tdIndex = document.createElement('td');
+      tdIndex.textContent = index + 1;
+      const tdCode = document.createElement('td');
+      tdCode.textContent = item.code;
+      const tdDate = document.createElement('td');
+      tdDate.textContent = item.timestamp;
+      tr.appendChild(tdIndex);
+      tr.appendChild(tdCode);
+      tr.appendChild(tdDate);
+      tbody.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
