@@ -11,6 +11,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <!-- html5-qrcode kitabxanası -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- Firebase SDK (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
@@ -23,6 +26,20 @@
     th { background-color: #f2f2f2; }
     #reader { width: 300px; margin: 20px auto; display: none; }
   </style>
+  <script>
+    // Firebase konfiqurasiyası - aşağıdakı dəyərləri öz Firebase layihənizdən kopyalayın
+    var firebaseConfig = {
+      apiKey: "AIzaSyDc7yQhIyIyT6Boh889UF6vRjNoSzgMxU4",
+      authDomain: "main-2283c.firebaseapp.com",
+      databaseURL: "https://main-2283c-default-rtdb.firebaseio.com/",
+      projectId: "main-2283c",
+      storageBucket: "main-2283c.firebasestorage.app",
+      messagingSenderId: "779751119477",
+      appId: "1:779751119477:web:91fd8e4fbfc5b017fbb63c"
+    };
+    // Firebase-i başlatmaq
+    firebase.initializeApp(firebaseConfig);
+  </script>
 </head>
 <body>
   <header>
@@ -71,29 +88,22 @@
         tbody.appendChild(tr);
       });
     }
-
     renderTable();
 
     let html5QrCode;
     const scanBtn = document.getElementById('scanBtn');
 
-    // Google Sheets-ə məlumat göndərən funksiya
-    function syncToGoogleSheets(data) {
-      const scriptURL = "https://script.google.com/macros/s/AKfycbzPpWe7bZR1stYb4MsUyMqcoGQXrlJQRE5teA0SrjC3n9bLBFqv1ahA06DWiZvB-VH1UQ/exec";
-      $.ajax({
-        url: scriptURL,
-        method: "POST",
-        data: JSON.stringify(data),
-        contentType: "application/json",
-        success: function(response) {
-          console.log("Data synced to Google Sheets:", response);
-          toastr.success("Məlumat Google Sheets-ə göndərildi!");
-        },
-        error: function(err) {
-          console.error("Sync error:", err);
-          toastr.error("Google Sheets-ə göndərmə zamanı xəta baş verdi!");
-        }
-      });
+    // Firebase-ə məlumat göndərən funksiya
+    function syncToFirebase(data) {
+      firebase.database().ref('scannedCodes').push(data)
+        .then(function() {
+          console.log("Data synced to Firebase:", data);
+          toastr.success("Məlumat Firebase-ə göndərildi!");
+        })
+        .catch(function(error) {
+          console.error("Firebase sync error:", error);
+          toastr.error("Firebase-ə göndərmə zamanı xəta baş verdi!");
+        });
     }
 
     scanBtn.addEventListener('click', function() {
@@ -106,20 +116,18 @@
         { facingMode: "environment" },
         config,
         (decodedText, decodedResult) => {
-          // Uğurlu oxunandan sonra scanning dayandırılır
           html5QrCode.stop().then(() => {
             readerElem.style.display = 'none';
           }).catch(err => {
             console.error(err);
           });
 
-          // Eyni kodun təkrar oxunmasının qarşısını alırıq
+          // Təkrar oxunmanın qarşısını alırıq
           if(scannedCodes.some(item => item.code === decodedText)){
             alert("Bu BR kod artıq oxunub!");
             return;
           }
 
-          // Tarix & Saat
           const now = new Date();
           const timestamp = now.toLocaleString();
 
@@ -129,17 +137,15 @@
           localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
           renderTable();
 
-          // Google Sheets-ə göndərmək üçün nümunəvi data obyekti:
-          // Bu hissəni real ehtiyaclarınıza uyğun dəyişə bilərsiniz (Növü, Tay_nömrəsi, Çəki, Sıra və s.)
-          const dataForSheet = {
-            Növü: "Naməlum",          // BR koddan parse edəcəyiniz və ya əlavə soruşacağınız məlumat
-            Tay_nömrəsi: decodedText, // Məsələn, decodedText-i tay nömrəsi kimi qəbul edirik
-            Çəki: "50",               // Demo məqsədi üçün sabit 50 yazdıq
-            Sıra: "1",                // Demo məqsədi üçün sabit 1 yazdıq
+          // Firebase-ə göndərmək üçün data obyekti
+          const dataForFirebase = {
+            Növü: "Naməlum",          // Əgər əlavə məlumat varsa, onu parse edin
+            Tay_nömrəsi: decodedText,  // decodedText-i tay nömrəsi kimi istifadə edirik
+            Çəki: "50",                // Demo məqsədi üçün sabit 50
+            Sıra: "1",                 // Demo məqsədi üçün sabit 1
             Tarix_və_saat: timestamp
           };
-          syncToGoogleSheets(dataForSheet);
-
+          syncToFirebase(dataForFirebase);
         },
         (errorMessage) => {
           console.log(`Kod oxunmadı: ${errorMessage}`);
@@ -148,12 +154,6 @@
         console.error(err);
       });
     });
-    function generateBarcodeSVG(value) {
-  let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  JsBarcode(svg, value, { format: "CODE128", width: 2, height: 40, displayValue: true });
-  return svg.outerHTML;
-}
-
   </script>
 </body>
 </html>
