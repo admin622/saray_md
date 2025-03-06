@@ -14,6 +14,7 @@
   <!-- Firebase SDK (v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
@@ -26,14 +27,15 @@
     th { background-color: #f2f2f2; }
     #reader { width: 300px; margin: 20px auto; display: none; }
   </style>
+  
   <script>
-    // Firebase konfiqurasiyası - aşağıdakı dəyərləri öz Firebase layihənizdən kopyalayın
+    // ✅ Firebase konfiqurasiyası (REAL Database URL daxil edilib)
     var firebaseConfig = {
       apiKey: "AIzaSyDc7yQhIyIyT6Boh889UF6vRjNoSzgMxU4",
       authDomain: "main-2283c.firebaseapp.com",
-      databaseURL: "https://main-2283c-default-rtdb.firebaseio.com/",
+      databaseURL: "https://main-2283c-default-rtdb.firebaseio.com/", // DÜZGÜN DATABASE URL
       projectId: "main-2283c",
-      storageBucket: "main-2283c.firebasestorage.app",
+      storageBucket: "main-2283c.appspot.com",  // Düzəldildi
       messagingSenderId: "779751119477",
       appId: "1:779751119477:web:91fd8e4fbfc5b017fbb63c"
     };
@@ -45,6 +47,7 @@
   <header>
     <h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1>
   </header>
+  
   <div class="container">
     <button id="scanBtn">BR kod oxut</button>
     <div id="reader"></div>
@@ -67,14 +70,14 @@
   </div>
 
   <script>
-    // Əgər login olunmayıbsa, login səhifəsinə yönləndiririk (opsional)
+    // ✅ Əgər login olunmayıbsa, login səhifəsinə yönləndiririk (opsional)
     if(sessionStorage.getItem("loggedIn") !== "true"){
       window.location.href = "login.html";
     }
 
     let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
 
-    // Cədvəli yenidən render edən funksiya
+    // ✅ Cədvəli yenidən render edən funksiya
     function renderTable() {
       const tbody = document.getElementById('codeTableBody');
       tbody.innerHTML = "";
@@ -93,19 +96,20 @@
     let html5QrCode;
     const scanBtn = document.getElementById('scanBtn');
 
-    // Firebase-ə məlumat göndərən funksiya
+    // ✅ Firebase-ə məlumat göndərən funksiya
     function syncToFirebase(data) {
       firebase.database().ref('scannedCodes').push(data)
         .then(function() {
-          console.log("Data synced to Firebase:", data);
+          console.log("✅ Məlumat Firebase-ə göndərildi:", data);
           toastr.success("Məlumat Firebase-ə göndərildi!");
         })
         .catch(function(error) {
-          console.error("Firebase sync error:", error);
+          console.error("❌ Firebase göndərmə xətası:", error);
           toastr.error("Firebase-ə göndərmə zamanı xəta baş verdi!");
         });
     }
 
+    // ✅ BR Kod oxuma funksiyası
     scanBtn.addEventListener('click', function() {
       const readerElem = document.getElementById('reader');
       readerElem.style.display = 'block';
@@ -122,33 +126,35 @@
             console.error(err);
           });
 
-          // Təkrar oxunmanın qarşısını alırıq
+          // ✅ Təkrar oxunmanın qarşısını alırıq
           if(scannedCodes.some(item => item.code === decodedText)){
-            alert("Bu BR kod artıq oxunub!");
+            alert("❌ Bu BR kod artıq oxunub!");
             return;
           }
 
           const now = new Date();
           const timestamp = now.toLocaleString();
 
-          // LocalStorage-ə əlavə edirik
+          // ✅ LocalStorage-ə əlavə edirik
           const newItem = { code: decodedText, timestamp: timestamp };
           scannedCodes.push(newItem);
           localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
           renderTable();
 
-          // Firebase-ə göndərmək üçün data obyekti
+          // ✅ Firebase-ə göndərmək üçün data obyekti
           const dataForFirebase = {
-            Növü: "Naməlum",          // Əgər əlavə məlumat varsa, onu parse edin
-            Tay_nömrəsi: decodedText,  // decodedText-i tay nömrəsi kimi istifadə edirik
-            Çəki: "50",                // Demo məqsədi üçün sabit 50
-            Sıra: "1",                 // Demo məqsədi üçün sabit 1
+            Növü: "Naməlum",
+            Tay_nömrəsi: decodedText,
+            Çəki: "50",
+            Sıra: "1",
             Tarix_və_saat: timestamp
           };
+
+          console.log("📤 Firebase-ə göndərilir:", dataForFirebase);
           syncToFirebase(dataForFirebase);
         },
         (errorMessage) => {
-          console.log(`Kod oxunmadı: ${errorMessage}`);
+          console.log(`❌ Kod oxunmadı: ${errorMessage}`);
         }
       ).catch(err => {
         console.error(err);
