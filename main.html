@@ -4,50 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</title>
-  <!-- jQuery -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <!-- Toastr CSS və JS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-  <!-- html5-qrcode kitabxanası -->
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <!-- Firebase SDK (v8) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  
+
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
     .container { padding: 20px; }
-    button { padding: 10px 20px; margin: 10px 0; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
+    button { padding: 10px; margin: 10px 0; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
     button:hover { background-color: #45a049; }
-    #scannedList { margin-top: 20px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #f2f2f2; }
     #reader { width: 300px; margin: 20px auto; display: none; }
   </style>
-  
-  <script>
-    // ✅ Firebase konfiqurasiyası (REAL Database URL daxil edilib)
-    var firebaseConfig = {
-      apiKey: "AIzaSyDc7yQhIyIyT6Boh889UF6vRjNoSzgMxU4",
-      authDomain: "main-2283c.firebaseapp.com",
-      databaseURL: "https://main-2283c-default-rtdb.firebaseio.com/", // DÜZGÜN DATABASE URL
-      projectId: "main-2283c",
-      storageBucket: "main-2283c.appspot.com",  // Düzəldildi
-      messagingSenderId: "779751119477",
-      appId: "1:779751119477:web:91fd8e4fbfc5b017fbb63c"
-    };
-    // Firebase-i başlatmaq
-    firebase.initializeApp(firebaseConfig);
-  </script>
 </head>
 <body>
   <header>
     <h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1>
   </header>
-  
+
   <div class="container">
     <button id="scanBtn">BR kod oxut</button>
     <div id="reader"></div>
@@ -58,11 +36,14 @@
           <tr>
             <th>Sıra</th>
             <th>BR kod</th>
+            <th>Növü</th>
+            <th>Tay nömrəsi</th>
+            <th>Çəkisi</th>
+            <th>Sıra</th>
             <th>Tarix & Saat</th>
           </tr>
         </thead>
         <tbody id="codeTableBody">
-          <!-- Oxunan kodlar burada göstəriləcək -->
         </tbody>
       </table>
     </div>
@@ -70,14 +51,46 @@
   </div>
 
   <script>
-    // ✅ Əgər login olunmayıbsa, login səhifəsinə yönləndiririk (opsional)
-    if(sessionStorage.getItem("loggedIn") !== "true"){
-      window.location.href = "login.html";
+    const JSONBIN_API_KEY = "$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq";
+    const JSONBIN_BIN_ID = "67cea66d8a456b7966731212";
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/67cea66d8a456b7966731212`;
+    
+    let scannedCodes = [];
+
+    function loadDataFromJSONBin() {
+      $.ajax({
+        url: JSONBIN_URL,
+        type: "GET",
+        headers: { "X-Master-Key": JSONBIN_API_KEY },
+        success: function(response) {
+          if (response.record && Array.isArray(response.record)) {
+            scannedCodes = response.record;
+            renderTable();
+          }
+        },
+        error: function(error) {
+          console.error("❌ JSONBin məlumatları yükləyə bilmədi:", error);
+        }
+      });
     }
 
-    let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
+    function syncToJSONBin() {
+      $.ajax({
+        url: JSONBIN_URL,
+        type: "PUT",
+        headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
+        data: JSON.stringify(scannedCodes),
+        success: function(response) {
+          console.log("✅ JSONBin-ə göndərildi:", response);
+          toastr.success("Məlumat JSONBin-ə uğurla göndərildi!");
+        },
+        error: function(error) {
+          console.error("❌ JSONBin göndərmə xətası:", error);
+          toastr.error("JSONBin-ə göndərmə zamanı xəta baş verdi!");
+        }
+      });
+    }
 
-    // ✅ Cədvəli yenidən render edən funksiya
     function renderTable() {
       const tbody = document.getElementById('codeTableBody');
       tbody.innerHTML = "";
@@ -86,30 +99,19 @@
         tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${item.code}</td>
+          <td>${item.novu}</td>
+          <td>${item.tay_nomresi}</td>
+          <td>${item.cekisi}</td>
+          <td>${item.sira}</td>
           <td>${item.timestamp}</td>
         `;
         tbody.appendChild(tr);
       });
     }
-    renderTable();
 
     let html5QrCode;
     const scanBtn = document.getElementById('scanBtn');
 
-    // ✅ Firebase-ə məlumat göndərən funksiya
-    function syncToFirebase(data) {
-      firebase.database().ref('scannedCodes').push(data)
-        .then(function() {
-          console.log("✅ Məlumat Firebase-ə göndərildi:", data);
-          toastr.success("Məlumat Firebase-ə göndərildi!");
-        })
-        .catch(function(error) {
-          console.error("❌ Firebase göndərmə xətası:", error);
-          toastr.error("Firebase-ə göndərmə zamanı xəta baş verdi!");
-        });
-    }
-
-    // ✅ BR Kod oxuma funksiyası
     scanBtn.addEventListener('click', function() {
       const readerElem = document.getElementById('reader');
       readerElem.style.display = 'block';
@@ -126,8 +128,7 @@
             console.error(err);
           });
 
-          // ✅ Təkrar oxunmanın qarşısını alırıq
-          if(scannedCodes.some(item => item.code === decodedText)){
+          if (scannedCodes.some(item => item.code === decodedText)){
             alert("❌ Bu BR kod artıq oxunub!");
             return;
           }
@@ -135,23 +136,18 @@
           const now = new Date();
           const timestamp = now.toLocaleString();
 
-          // ✅ LocalStorage-ə əlavə edirik
-          const newItem = { code: decodedText, timestamp: timestamp };
-          scannedCodes.push(newItem);
-          localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
-          renderTable();
-
-          // ✅ Firebase-ə göndərmək üçün data obyekti
-          const dataForFirebase = {
-            Növü: "Naməlum",
-            Tay_nömrəsi: decodedText,
-            Çəki: "50",
-            Sıra: "1",
-            Tarix_və_saat: timestamp
+          const newItem = {
+            code: decodedText,
+            novu: "Tütün A", // Burada BR koddan çıxarılan məlumat ola bilər
+            tay_nomresi: "TAY-001",
+            cekisi: "50 kg",
+            sira: "1",
+            timestamp: timestamp
           };
 
-          console.log("📤 Firebase-ə göndərilir:", dataForFirebase);
-          syncToFirebase(dataForFirebase);
+          scannedCodes.push(newItem);
+          renderTable();
+          syncToJSONBin();
         },
         (errorMessage) => {
           console.log(`❌ Kod oxunmadı: ${errorMessage}`);
@@ -160,6 +156,8 @@
         console.error(err);
       });
     });
+
+    loadDataFromJSONBin();
   </script>
 </body>
 </html>
