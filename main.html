@@ -9,78 +9,67 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8f9fa;}
-    header {background-color: #4CAF50; color: white; padding: 10px; text-align: center;}
-    .container {padding: 20px; max-width: 800px; margin: auto;}
-    button {padding: 10px; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;}
-    button:hover {background-color: #45a049;}
-    input {width: 100%; padding: 5px; margin-bottom: 10px;}
-    table {width: 100%; border-collapse: collapse; margin-top: 10px;}
-    th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}
-    th {background-color: #f2f2f2;}
-    #reader {width: 300px; margin: 20px auto; display: none;}
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .container { padding: 20px; }
+    button { padding: 10px; margin: 10px 0; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    #reader { width: 300px; margin: 20px auto; display: none; }
   </style>
 </head>
 <body>
-  <header><h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1></header>
+  <header>
+    <h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1>
+  </header>
+
   <div class="container">
     <button id="scanBtn">BR kod oxut</button>
     <div id="reader"></div>
-    
-    <!-- Oxunan BR kodu göstərmək üçün readonly input -->
-    <label>Oxunan BR kod:</label>
-    <input type="text" id="brkod" placeholder="Oxunan BR kod burada göstəriləcək..." readonly>
-
-    <label>Növü:</label>
-    <input type="text" id="novu" placeholder="Tütün növü daxil edin...">
-    <label>Çəkisi (kg):</label>
-    <input type="number" id="cekisi">
-    <!-- Tay nömrəsi üçün ayrıca input əlavə edilir -->
-    <label>Tay nömrəsi:</label>
-    <input type="text" id="tay_nomresi" placeholder="Tay nömrəsi daxil edin...">
-    <label>Sıra:</label>
-    <input type="text" id="sira">
-
-    <button id="saveDataBtn">Məlumatı Saxla</button>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Sıra</th>
-          <th>BR kod</th>
-          <th>Növü</th>
-          <th>Tay nömrəsi</th>
-          <th>Çəkisi</th>
-          <th>Sıra</th>
-          <th>Tarix & Saat</th>
-        </tr>
-      </thead>
-      <tbody id="codeTableBody"></tbody>
-    </table>
+    <div id="scannedList">
+      <h3>Oxunan BR kodlar</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Sıra</th>
+            <th>BR kod</th>
+            <th>Növü</th>
+            <th>Tay nömrəsi</th>
+            <th>Çəkisi</th>
+            <th>Sıra</th>
+            <th>Tarix & Saat</th>
+          </tr>
+        </thead>
+        <tbody id="codeTableBody">
+        </tbody>
+      </table>
+    </div>
     <button onclick="window.location.href='report.html'">Hesabat Səhifəsi</button>
   </div>
 
   <script>
     const JSONBIN_API_KEY = "$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq";
-    const JSONBIN_BIN_ID = "67cea66d8a456b796673121";
-    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+    const JSONBIN_BIN_ID = "67cea66d8a456b7966731212";
+    const JSONBIN_URL = `https://api.jsonbin.io/v3/b/67cea66d8a456b7966731212`;
+    
+    let scannedCodes = [];
 
-    let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
-    let currentBRCode = "";
-
-    function renderTable() {
-      $("#codeTableBody").html("");
-      scannedCodes.forEach((item, index) => {
-        $("#codeTableBody").append(`
-          <tr>
-            <td>${index + 1}</td>
-            <td>${item.code}</td>
-            <td>${item.novu}</td>
-            <td>${item.tay_nomresi}</td>
-            <td>${item.cekisi}</td>
-            <td>${item.sira}</td>
-            <td>${item.timestamp}</td>
-          </tr>`);
+    function loadDataFromJSONBin() {
+      $.ajax({
+        url: JSONBIN_URL,
+        type: "GET",
+        headers: { "X-Master-Key": JSONBIN_API_KEY },
+        success: function(response) {
+          if (response.record && Array.isArray(response.record)) {
+            scannedCodes = response.record;
+            renderTable();
+          }
+        },
+        error: function(error) {
+          console.error("❌ JSONBin məlumatları yükləyə bilmədi:", error);
+        }
       });
     }
 
@@ -88,62 +77,121 @@
       $.ajax({
         url: JSONBIN_URL,
         type: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": JSONBIN_API_KEY
-        },
+        headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
         data: JSON.stringify(scannedCodes),
-        success: () => toastr.success("JSONBin-ə uğurla göndərildi!"),
-        error: () => toastr.error("JSONBin-ə göndərilmədi!")
+        success: function(response) {
+          console.log("✅ JSONBin-ə göndərildi:", response);
+          toastr.success("Məlumat JSONBin-ə uğurla göndərildi!");
+        },
+        error: function(error) {
+          console.error("❌ JSONBin göndərmə xətası:", error);
+          toastr.error("JSONBin-ə göndərmə zamanı xəta baş verdi!");
+        }
       });
     }
 
-    $("#scanBtn").click(() => {
-      $("#reader").show();
-      let html5QrCode = new Html5Qrcode("reader");
+    function renderTable() {
+      const tbody = document.getElementById('codeTableBody');
+      tbody.innerHTML = "";
+      scannedCodes.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item.code}</td>
+          <td>${item.novu}</td>
+          <td>${item.tay_nomresi}</td>
+          <td>${item.cekisi}</td>
+          <td>${item.sira}</td>
+          <td>${item.timestamp}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          html5QrCode.stop().then(() => $("#reader").hide());
-          // Əgər eyni BR kod artıq varsa, xəbərdarlıq veririk
-          if (scannedCodes.some(item => item.code === decodedText)) {
-            toastr.error("Bu BR kod artıq oxunub!");
+    let html5QrCode;
+    const scanBtn = document.getElementById('scanBtn');
+
+    scanBtn.addEventListener('click', function() {
+      const readerElem = document.getElementById('reader');
+      readerElem.style.display = 'block';
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: 250 };
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        (decodedText, decodedResult) => {
+          html5QrCode.stop().then(() => {
+            readerElem.style.display = 'none';
+          }).catch(err => {
+            console.error(err);
+          });
+
+          // Eyni BR kodun təkrar oxunmasının qarşısını alırıq
+          if (scannedCodes.some(item => item.code === decodedText)){
+            alert("❌ Bu BR kod artıq oxunub!");
             return;
           }
-          currentBRCode = decodedText;
-          $("#brkod").val(currentBRCode); // Oxunan BR kodu inputda göstərilir
-          toastr.success("Oxunan BR kod: " + decodedText);
+
+          // BR kodu aşağıdakı formatda olmalıdır:
+          // "Çəkisi: {title} kg | Növü: {author} | Tay nömrəsi: {year} | Sıra: {row}"
+          let cekisi = "", novu = "", tay_nomresi = "", sira = "";
+          try {
+            const parts = decodedText.split("|");
+            if(parts.length === 4) {
+              cekisi = parts[0].replace("Çəkisi:", "").replace("kg", "").trim();
+              novu = parts[1].replace("Növü:", "").trim();
+              tay_nomresi = parts[2].replace("Tay nömrəsi:", "").trim();
+              sira = parts[3].replace("Sıra:", "").trim();
+            } else {
+              alert("BR kod formatı düzgün deyil!");
+              return;
+            }
+          } catch(e) {
+            console.error("BR kod parsing error:", e);
+            alert("BR kod oxunması zamanı xəta baş verdi!");
+            return;
+          }
+
+          const now = new Date();
+          const timestamp = now.toLocaleString();
+
+          const newItem = {
+            code: decodedText,
+            novu: novu,
+            tay_nomresi: tay_nomresi,
+            cekisi: cekisi + " kg",
+            sira: sira,
+            timestamp: timestamp
+          };
+
+          scannedCodes.push(newItem);
+          renderTable();
+          syncToJSONBin();
+
+          // Əlavə olaraq, localStorage yaddaşına da yazmaq istəyirsinizsə:
+          localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
+        },
+        (errorMessage) => {
+          console.log(`❌ Kod oxunmadı: ${errorMessage}`);
         }
-      );
+      ).catch(err => {
+        console.error(err);
+      });
     });
 
-    $("#saveDataBtn").click(() => {
-      if (!currentBRCode) { 
-        alert("Əvvəlcə BR kod oxudun!"); 
-        return; 
+    // localStorage-dan yükləmə funksiyası (əgər varsa)
+    function loadDataFromLocalStorage() {
+      const storedData = localStorage.getItem("scannedCodes");
+      if (storedData) {
+        scannedCodes = JSON.parse(storedData);
+        renderTable();
       }
-      const now = new Date().toLocaleString();
+    }
 
-      const newItem = {
-        code: currentBRCode,
-        novu: $("#novu").val(),
-        tay_nomresi: $("#tay_nomresi").val(),
-        cekisi: $("#cekisi").val() + " kg",
-        sira: $("#sira").val(),
-        timestamp: now
-      };
-
-      scannedCodes.push(newItem);
-      localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
-      syncToJSONBin();
-      renderTable();
-
-      // Daxil edilmiş məlumatları təmizləyirik
-      currentBRCode = "";
-      $("#brkod, #novu, #cekisi, #tay_nomresi, #sira").val("");
-    });
-
-    $(document).ready(renderTable);
+    // Əvvəlcə localStorage və JSONBin-dən məlumatları yükləyirik
+    loadDataFromLocalStorage();
+    loadDataFromJSONBin();
   </script>
 </body>
 </html>
