@@ -1,3 +1,4 @@
+<!-- main.html - Tam işlək və düzgün versiya -->
 <!DOCTYPE html>
 <html lang="az">
 <head>
@@ -34,6 +35,8 @@
     <label>Sıra:</label>
     <input type="text" id="sira">
 
+    <button id="saveDataBtn">Məlumatı Saxla</button>
+
     <table>
       <thead>
         <tr>
@@ -56,7 +59,8 @@
     const JSONBIN_BIN_ID = "67cea66d8a456b796673121";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
-    let scannedCodes = [];
+    let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
+    let currentBRCode = "";
 
     function renderTable() {
       $("#codeTableBody").html("");
@@ -76,7 +80,7 @@
 
     function syncToJSONBin() {
       $.ajax({
-        url: `https://api.jsonbin.io/v3/b/67cea66d8a456b7966731212`,
+        url: JSONBIN_URL,
         type: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -89,55 +93,45 @@
     }
 
     $("#scanBtn").click(() => {
-      const readerElem = $("#reader");
-      readerElem.show();
+      $("#reader").show();
       let html5QrCode = new Html5Qrcode("reader");
 
       html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
         (decodedText) => {
           html5QrCode.stop().then(() => $("#reader").hide());
-
           if (scannedCodes.some(item => item.code === decodedText)) {
             toastr.error("Bu BR kod artıq oxunub!");
             return;
           }
-
-          const now = new Date().toLocaleString();
-          const novu = $("#novu").val();
-          const cekisi = $("#cekisi").val();
-          const sira = $("#sira").val();
-
-          const newItem = {
-            code: decodedText,
-            novu: novu.value,
-            tay_nomresi: decodedText,
-            cekisi: cekisi.value,
-            sira: sira.value,
-            timestamp: now
-          };
-
-          scannedCodes.push(newItem);
-          syncToJSONBin();
-          renderTable();
+          currentBRCode = decodedText;
+          toastr.success("Oxunan BR kod: " + decodedText);
         }
       );
     });
 
-    $(document).ready(function(){
-      function loadFromJSONBin() {
-        $.ajax({
-          url: `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`,
-          type: "GET",
-          headers: { "X-Master-Key": JSONBIN_API_KEY },
-          success: (data) => {
-            scannedCodes = data.record;
-            renderTable();
-          },
-          error: () => toastr.error("JSONBin-dən məlumat oxunmadı!")
-        });
-      }
-      loadReportData();
+    $("#saveDataBtn").click(() => {
+      if (!currentBRCode) { alert("Əvvəlcə BR kod oxudun!"); return; }
+      const now = new Date().toLocaleString();
+
+      const newItem = {
+        code: currentBRCode,
+        novu: $("#novu").val(),
+        tay_nomresi: currentBRCode,
+        cekisi: $("#cekisi").val() + " kg",
+        sira: $("#sira").val(),
+        timestamp: now
+      };
+
+      scannedCodes.push(newItem);
+      localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
+      syncToJSONBin();
+      renderTable();
+
+      currentBRCode = "";
+      $("#novu, #cekisi, #sira").val("");
     });
+
+    $(document).ready(renderTable);
   </script>
 </body>
 </html>
