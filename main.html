@@ -1,4 +1,3 @@
-<!-- main.html - Tam işlək və düzgün versiya -->
 <!DOCTYPE html>
 <html lang="az">
 <head>
@@ -27,11 +26,18 @@
   <div class="container">
     <button id="scanBtn">BR kod oxut</button>
     <div id="reader"></div>
+    
+    <!-- Oxunan BR kodu göstərmək üçün readonly input -->
+    <label>Oxunan BR kod:</label>
+    <input type="text" id="brkod" placeholder="Oxunan BR kod burada göstəriləcək..." readonly>
 
     <label>Növü:</label>
     <input type="text" id="novu" placeholder="Tütün növü daxil edin...">
     <label>Çəkisi (kg):</label>
     <input type="number" id="cekisi">
+    <!-- Tay nömrəsi üçün ayrıca input əlavə edilir -->
+    <label>Tay nömrəsi:</label>
+    <input type="text" id="tay_nomresi" placeholder="Tay nömrəsi daxil edin...">
     <label>Sıra:</label>
     <input type="text" id="sira">
 
@@ -99,24 +105,29 @@
       html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
         (decodedText) => {
           html5QrCode.stop().then(() => $("#reader").hide());
+          // Əgər eyni BR kod artıq varsa, xəbərdarlıq veririk
           if (scannedCodes.some(item => item.code === decodedText)) {
             toastr.error("Bu BR kod artıq oxunub!");
             return;
           }
           currentBRCode = decodedText;
+          $("#brkod").val(currentBRCode); // Oxunan BR kodu inputda göstərilir
           toastr.success("Oxunan BR kod: " + decodedText);
         }
       );
     });
 
     $("#saveDataBtn").click(() => {
-      if (!currentBRCode) { alert("Əvvəlcə BR kod oxudun!"); return; }
+      if (!currentBRCode) { 
+        alert("Əvvəlcə BR kod oxudun!"); 
+        return; 
+      }
       const now = new Date().toLocaleString();
 
       const newItem = {
         code: currentBRCode,
         novu: $("#novu").val(),
-        tay_nomresi: currentBRCode,
+        tay_nomresi: $("#tay_nomresi").val(),
         cekisi: $("#cekisi").val() + " kg",
         sira: $("#sira").val(),
         timestamp: now
@@ -127,8 +138,9 @@
       syncToJSONBin();
       renderTable();
 
+      // Daxil edilmiş məlumatları təmizləyirik
       currentBRCode = "";
-      $("#novu, #cekisi, #sira").val("");
+      $("#brkod, #novu, #cekisi, #tay_nomresi, #sira").val("");
     });
 
     $(document).ready(renderTable);
