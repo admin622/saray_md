@@ -1,4 +1,3 @@
-<!-- main.html - Düzgün məlumat göndərilməsi üçün düzəlişlər edilmiş versiya -->
 <!DOCTYPE html>
 <html lang="az">
 <head>
@@ -6,39 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8f9fa; }
-    header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
-    .container { padding: 20px; max-width: 800px; margin: auto; }
-    button { padding: 10px; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer; }
-    button:hover { background-color: #45a049; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    #reader { width: 300px; margin: 20px auto; display: none; }
+    body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8f9fa;}
+    header {background-color: #4CAF50; color: white; padding: 10px; text-align: center;}
+    .container {padding: 20px; max-width: 800px; margin: auto;}
+    button {padding: 10px; border: none; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;}
+    button:hover {background-color: #45a049;}
+    input {width: 100%; padding: 5px; margin-bottom: 10px;}
+    table {width: 100%; border-collapse: collapse; margin-top: 10px;}
+    th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}
+    th {background-color: #f2f2f2;}
+    #reader {width: 300px; margin: 20px auto; display: none;}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1>
-  </header>
+  <header><h1>Zaqatala Agro Industry MMC - Anbar Qeydiyyatı</h1></header>
   <div class="container">
     <button id="scanBtn">BR kod oxut</button>
     <div id="reader"></div>
-    <form id="dataForm">
-      <label>Növü:</label>
-      <input type="text" id="novu" required>
-      <label>Çəkisi (kg):</label>
-      <input type="text" id="cekisi" required>
-      <label>Tay nömrəsi:</label>
-      <input type="text" id="tay_nomresi" required>
-      <label>Sıra:</label>
-      <input type="text" id="sira" required>
-      <button type="submit">Məlumatı Göndər</button>
-    </form>
+
+    <label>Növü:</label>
+    <input type="text" id="novu" placeholder="Tütün növü daxil edin...">
+    <label>Çəkisi (kg):</label>
+    <input type="number" id="cekisi">
+    <label>Sıra:</label>
+    <input type="text" id="sira">
+
     <table>
       <thead>
         <tr>
@@ -55,57 +50,93 @@
     </table>
     <button onclick="window.location.href='report.html'">Hesabat Səhifəsi</button>
   </div>
+
   <script>
     const JSONBIN_API_KEY = "$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq";
     const JSONBIN_BIN_ID = "67cea66d8a456b796673121";
     const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
     let scannedCodes = [];
-    function syncToJSONBin() {
-      $.ajax({
-        url: JSONBIN_URL,
-        type: "PUT",
-        headers: { "Content-Type": "application/json", "X-Master-Key": JSONBIN_API_KEY },
-        data: JSON.stringify(scannedCodes),
-        success: function() { toastr.success("Məlumat JSONBin-ə göndərildi!"); },
-        error: function() { toastr.error("JSONBin-ə göndərmə zamanı xəta baş verdi!"); }
+
+    function renderTable() {
+      $("#codeTableBody").html("");
+      scannedCodes.forEach((item, index) => {
+        $("#codeTableBody").append(`
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.code}</td>
+            <td>${item.novu}</td>
+            <td>${item.tay_nomresi}</td>
+            <td>${item.cekisi}</td>
+            <td>${item.sira}</td>
+            <td>${item.timestamp}</td>
+          </tr>`);
       });
     }
-    let scannedCode = "";
-    document.getElementById('scanBtn').addEventListener('click', function() {
-      const readerElem = document.getElementById('reader');
-      readerElem.style.display = 'block';
-      html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
+
+    function syncToJSONBin() {
+      $.ajax({
+        url: `https://api.jsonbin.io/v3/b/67cea66d8a456b7966731212`,
+        type: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": JSONBIN_API_KEY
+        },
+        data: JSON.stringify(scannedCodes),
+        success: () => toastr.success("JSONBin-ə uğurla göndərildi!"),
+        error: () => toastr.error("JSONBin-ə göndərilmədi!")
+      });
+    }
+
+    $("#scanBtn").click(() => {
+      const readerElem = $("#reader");
+      readerElem.show();
+      let html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
         (decodedText) => {
-          html5QrCode.stop().then(() => readerElem.style.display = 'none');
+          html5QrCode.stop().then(() => $("#reader").hide());
+
           if (scannedCodes.some(item => item.code === decodedText)) {
-            alert("Bu BR kod artıq oxunub!");
+            toastr.error("Bu BR kod artıq oxunub!");
             return;
           }
-          scannedCode = decodedText;
-          toastr.success("BR kod oxundu: " + decodedText);
+
+          const now = new Date().toLocaleString();
+          const novu = $("#novu").val();
+          const cekisi = $("#cekisi").val();
+          const sira = $("#sira").val();
+
+          const newItem = {
+            code: decodedText,
+            novu: novu.value,
+            tay_nomresi: decodedText,
+            cekisi: cekisi.value,
+            sira: sira.value,
+            timestamp: now
+          };
+
+          scannedCodes.push(newItem);
+          syncToJSONBin();
+          renderTable();
         }
       );
     });
-    document.getElementById('dataForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      if (!scannedCode) {
-        alert("Əvvəlcə BR kod oxudun!");
-        return;
+
+    $(document).ready(function(){
+      function loadFromJSONBin() {
+        $.ajax({
+          url: `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`,
+          type: "GET",
+          headers: { "X-Master-Key": JSONBIN_API_KEY },
+          success: (data) => {
+            scannedCodes = data.record;
+            renderTable();
+          },
+          error: () => toastr.error("JSONBin-dən məlumat oxunmadı!")
+        });
       }
-      const now = new Date().toLocaleString();
-      const newItem = {
-        code: scannedCode,
-        novu: document.getElementById('novu').value,
-        tay_nomresi: document.getElementById('tay_nomresi').value,
-        cekisi: document.getElementById('cekisi').value + " kg",
-        sira: document.getElementById('sira').value,
-        timestamp: now
-      };
-      scannedCodes.push(newItem);
-      syncToJSONBin();
+      loadReportData();
     });
   </script>
 </body>
