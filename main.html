@@ -52,21 +52,7 @@
 
     let scannedCodes = JSON.parse(localStorage.getItem("scannedCodes") || "[]");
 
-    function renderTable() {
-      const tbody = $("#codeTableBody").empty();
-      scannedCodes.forEach((item, idx) => {
-        tbody.append(`
-          <tr>
-            <td>${idx + 1}</td>
-            <td>${item.cekisi}</td>
-            <td>${item.novu}</td>
-            <td>${item.tay_nomresi}</td>
-            <td>${item.sira}</td>
-            <td>${item.timestamp}</td>
-          </tr>
-        `);
-      });
-    }
+  
 
     function syncToJSONBin() {
       $.ajax({
@@ -80,46 +66,78 @@
     }
 
     function startScanner() {
-      const qrCode = new Html5Qrcode("reader");
-      $("#reader").show();
-      qrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          qrCode.stop().then(() => $("#reader").hide());
+  const qrCode = new Html5Qrcode("reader");
+  $("#reader").show();
+  qrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+    (decodedText) => {
+      qrCode.stop().then(() => $("#reader").hide());
 
-          if (scannedCodes.some(code => code.code === decodedText)) {
-            toastr.warning("⚠️ Bu BR kod artıq mövcuddur!");
-            return;
-          }
+      // Təkrar kod yoxlaması
+      if (scannedCodes.some(item => item.code === decodedText)) {
+        toastr.error("❌ Bu BR kod artıq mövcuddur!");
+        return;
+      }
 
-          const parts = decodedText.split("|").map(p => p.trim());
-          if (parts.length !== 4) {
-            toastr.error("❌ BR kod formatı yanlışdır!");
-            return;
-          }
+      // Məlumatları doğru parse etmək
+      const parts = decodedText.split('|');
+      if (parts.length !== 4) {
+        toastr.error("❌ BR kod formatı yanlışdır!");
+        return;
+      }
 
-          const newItem = {
-            code: decodedText,
-            cekisi: parts[0].split(":")[1].trim(),
-            novu: parts[1].split(":")[1].trim(),
-            tay_nomresi: parts[2].split(":")[1].trim(),
-            sira: parts[3].split(":")[1].trim(),
-            timestamp: new Date().toLocaleString()
-          };
+      const cekisi = parts[0].split(":")[1].replace("kg","").trim();
+      const novu = parts[1].split(":")[1].trim();
+      const tay_nomresi = parts[2].split(":")[1].trim();
+      const sira = parts[3].split(":")[1].trim();
 
-          scannedCodes.push(newItem);
-          localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
-          renderTable();
-          syncToJSONBin();
-        },
-        (errorMessage) => {
-          console.warn(`Kod oxunmadı: ${errorMessage}`);
-        }
-      );
+      const newItem = {
+        code: decodedText,
+        cekisi,
+        novu,
+        tay_nomresi,
+        sira,
+        timestamp: new Date().toLocaleString()
+      };
+
+      if (scannedCodes.some(item => item.code === decodedText)){
+        toastr.warning("⚠️ Bu məlumat artıq əlavə edilib!");
+        return;
+      }
+
+      scannedCodes.push(newItem);
+      localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
+      renderTable();
+      syncToJSONBin();
+    },
+    (errorMessage) => {
+      console.warn(`QR kod oxunmadı: ${errorMessage}`);
     }
+  ).catch(err => {
+    console.error(err);
+  });
+}
 
-    $("#scanBtn").click(startScanner);
+function renderTable(){
+  const tbody = $("#codeTableBody").empty();
+  scannedCodes.forEach((item, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.cekisi} kg</td>
+        <td>${item.novu}</td>
+        <td>${item.tay_nomresi}</td>
+        <td>${item.sira}</td>
+        <td>${item.timestamp}</td>
+      </tr>`;
+  });
+}
 
-    $(document).ready(renderTable);
+// İlk açılış zamanı işləsin deyə:
+$(document).ready(function(){
+  scannedCodes = JSON.parse(localStorage.getItem("scannedCodes")) || [];
+  renderTable();
+});
+
   </script>
 </body>
 </html>
