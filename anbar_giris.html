@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <title>Anbara QR ilə Mal Əlavə</title>
+  <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
+  <script>
+    const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/67cea66d8a456b7966731212';
+    const JSONBIN_API_KEY = '$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmA8bSygSfzmsXrTgc.BX9AkGeE3O';
+
+    async function qrResult(decodedText) {
+      const anbar = JSON.parse(localStorage.getItem('anbar')) || [];
+
+      // Əgər eyni məlumat varsa əlavə etmə
+      if (anbar.includes(decodedText)) {
+        alert('❌ Bu məlumat artıq əlavə edilib!');
+        return;
+      }
+
+      bookshelf.push(decodedText);
+      localStorage.setItem('anbar', JSON.stringify(bookshelf));
+
+      // JSONBin-ə yazmaq
+      fetch(JSONBIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_API_KEY
+        },
+        body: JSON.stringify({data: bookshelf})
+      })
+      .then(response => response.json())
+      .then(() => alert('✅ JSONBin-ə uğurla əlavə edildi!'))
+      .catch(error => alert('JSONBin xətası: ' + error));
+    }
+
+    function startScanner() {
+      const scanner = new JsBarcodeScanner(qrSuccess);
+      scanner.start();
+    }
+    
+    function qrSuccess(result) {
+      document.getElementById('qr-result').innerHTML = `✅ Oxunan məlumat: ${result}`;
+      qrSuccess(result);
+    }
+  </script>
+</head>
+<body>
+  <h2>Anbara Mal Qəbulu 📦</h2>
+  <video id="qr-video" width="300" height="200"></video>
+  <div id="qr-result">QR məlumatı gözlənilir...</div>
+  <button onclick="startScanner()">📷 QR Kodu Oxut</button>
+
+  <!-- JsBarcode CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode-scanner@1.0.4/dist/jsBarcodeScanner.min.js"></script>
+</body>
+</html>
