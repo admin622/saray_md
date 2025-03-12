@@ -74,47 +74,61 @@
       });
     }
 
-    function startScanner() {
-      $("#reader").show();
-      const qrCode = new Html5Qrcode("reader");
-      qrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          qrCode.stop().then(() => $("#reader").hide());
+   function startScanner() {
+  const qrCode = new Html5Qrcode("reader");
+  $("#reader").show();
 
-          if (scannedCodes.some(item => item.code === decodedText)) {
-            toastr.error("❌ Bu BR kod artıq mövcuddur!");
-            return;
-          }
+  qrCode.start(
+    { facingMode: "environment" }, 
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+      qrCode.stop().then(() => {
+        $("#reader").hide();
+      }).catch(err => console.error(err));
 
-          const parts = decodedText.split('|');
-          if (parts.length !== 4) {
-            toastr.error("❌ BR kod formatı yanlışdır!");
-            return;
-          }
+      if (scannedCodes.some(item => item.code === decodedText)) {
+        toastr.warning("⚠️ Bu BR kod artıq mövcuddur!");
+        return;
+      }
 
-          const cekisi = parts[0].split(":")[1].replace("kg","").trim();
-          const novu = parts[1].split(":")[1].trim();
-          const tay_nomresi = parts[2].split(":")[1].trim();
-          const sira = parts[3].split(":")[1].trim();
+      const parts = decodedText.split('|');
+      if (parts.length !== 4) {
+        toastr.error("❌ BR kod formatı yanlışdır!");
+        return;
+      }
 
-          const newItem = {
-            code: decodedText,
-            cekisi,
-            novu,
-            tay_nomresi,
-            sira,
-            timestamp: new Date().toLocaleString()
-          };
+      const cekisi = parts[0].split(":")[1].replace("kg", "").trim();
+      const novu = parts[1].split(":")[1].trim();
+      const tay_nomresi = parts[2].split(":")[1].trim();
+      const sira = parts[3].split(":")[1].trim();
 
-          scannedCodes.push(newItem);
-          localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
-          renderTable();
-          syncToJSONBin();
-        }
+      const newItem = {
+        code: decodedText,
+        cekisi,
+        novu,
+        tay_nomresi,
+        sira,
+        timestamp: new Date().toLocaleString()
+      };
 
-        const qrCode = new Html5Qrcode("reader");
-        qrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, qrSuccess);
+      scannedCodes.push(newItem);
+      localStorage.setItem("scannedCodes", JSON.stringify(scannedCodes));
+      renderTable();
+      syncToJSONBin();
+    },
+    (errorMessage) => {
+      console.warn(`QR kod oxunmadı: ${errorMessage}`);
     }
+  ).catch(err => {
+    toastr.error("❌ Kamera açılarkən xəta yarandı: " + err);
+  });
+}
+
+$(document).ready(function() {
+  $("#scanBtn").click(startScanner);
+  scannedCodes = JSON.parse(localStorage.getItem("scannedCodes")) || [];
+  renderTable();
+});
 
     function renderTable(){
       $("#codeTableBody").empty();
