@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hesabat Səhifəsi</title>
+  <title>Hesabat Səhifəsi - Tam Hesabat</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
   <!-- XLSX kitabxanası (Excel üçün) -->
@@ -12,45 +12,123 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       background: #f8f9fa;
       padding: 20px;
     }
-    h1 { margin-bottom: 20px; }
-    .filter-container { margin-bottom: 20px; }
-    .table-container { margin-top: 20px; }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .filter-container {
+      margin-bottom: 20px;
+    }
+    .summary-card {
+      background: linear-gradient(135deg, #007bff, #00aaff);
+      color: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .summary-card h3 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    .summary-card p {
+      font-size: 1.2rem;
+      margin: 5px 0;
+    }
+    .breakdown-card {
+      background: #fff;
+      border: 2px solid #007bff;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .breakdown-card h4 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .breakdown-table th, .breakdown-table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .report-table th {
+      background: #007bff;
+      color: #fff;
+    }
+    .download-buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Hesabat Səhifəsi</h1>
-    <!-- BR Kod Oxuma Səhifəsinə Keçid -->
-    <a href="main.html" class="btn btn-sm btn-secondary mb-3">BR Kod Oxuma Səhifəsinə Keçid</a>
+    <!-- Üst hissə -->
+    <div class="header">
+      <h1>Hesabat Səhifəsi</h1>
+      <p>Dəqiq, tam və axıcı hesabat</p>
+      <a href="main.html" class="btn btn-sm btn-secondary">BR Kod Oxuma Səhifəsinə Keçid</a>
+    </div>
 
-    <!-- Filtrasiya formu -->
-    <div class="filter-container">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label for="filterDate" class="form-label">Tarix:</label>
-          <input type="date" id="filterDate" class="form-control">
+    <!-- Filtrasiya bölməsi -->
+    <div class="filter-container row g-3">
+      <div class="col-md-4">
+        <label for="filterDate" class="form-label">Tarix:</label>
+        <input type="date" id="filterDate" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label for="filterType" class="form-label">Növü:</label>
+        <input type="text" id="filterType" class="form-control" placeholder="Məsələn: 1, 2, K, G və s.">
+      </div>
+      <div class="col-md-4 align-self-end">
+        <button id="searchBtn" class="btn btn-primary w-100">Axtar</button>
+      </div>
+    </div>
+
+    <!-- Ümumi Hesabat Kartları -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="summary-card">
+          <h3>Ümumi Məlumat</h3>
+          <p>Ümumi Çəki: <span id="totalWeight">0</span> kg</p>
+          <p>Ümumi Tay: <span id="totalCount">0</span> ədəd</p>
         </div>
-        <div class="col-md-4">
-          <label for="filterType" class="form-label">Növü:</label>
-          <input type="text" id="filterType" class="form-control" placeholder="Məsələn: 1, 2, K, G və s.">
-        </div>
-        <div class="col-md-4 align-self-end">
-          <button id="searchBtn" class="btn btn-primary">Axtar</button>
+      </div>
+      <div class="col-md-6">
+        <div class="breakdown-card">
+          <h4>Növ üzrə Hesabat</h4>
+          <div class="table-responsive">
+            <table class="table table-striped breakdown-table">
+              <thead>
+                <tr>
+                  <th>Növ</th>
+                  <th>Ədəd</th>
+                  <th>Çəki (kg)</th>
+                </tr>
+              </thead>
+              <tbody id="breakdownBody">
+                <!-- Növ üzrə breakdown -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Hesabat cədvəli -->
-    <div class="table-container">
-      <table class="table table-striped" id="reportTable">
+    <!-- Ətraflı Hesabat Cədvəli -->
+    <div class="table-responsive">
+      <table class="table table-bordered report-table" id="reportTable">
         <thead>
           <tr>
             <th>#</th>
-            <th>Çəki</th>
+            <th>Çəki (kg)</th>
             <th>Növü</th>
             <th>Tay nömrəsi</th>
             <th>Sıra</th>
@@ -58,14 +136,14 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Məlumatlar burada yerləşəcək -->
+          <!-- Ətraflı qeydlər -->
         </tbody>
       </table>
     </div>
 
     <!-- Yükləmə düymələri -->
-    <div class="mt-3">
-      <button id="downloadExcel" class="btn btn-success">Excel Yüklə</button>
+    <div class="download-buttons">
+      <button id="downloadExcel" class="btn btn-success me-2">Excel Yüklə</button>
       <button id="downloadPDF" class="btn btn-danger">PDF Yüklə</button>
     </div>
   </div>
@@ -85,10 +163,62 @@
         });
         const json = await response.json();
         reportData = json.record || [];
-        filterReport();
+        renderReport();
       } catch (error) {
         console.error('Məlumat yüklənərkən xəta:', error);
         alert('Məlumatları yükləməkdə xəta baş verdi!');
+      }
+    }
+
+    function renderReport() {
+      renderTable(reportData);
+      renderSummary(reportData);
+    }
+
+    function renderTable(data) {
+      const tbody = document.querySelector('#reportTable tbody');
+      tbody.innerHTML = "";
+      data.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item["Çəki"]}</td>
+          <td>${item["Növü"]}</td>
+          <td>${item["Tay_nömrəsi"]}</td>
+          <td>${item["Sıra"]}</td>
+          <td>${item.Oxunma_tarixi ? new Date(item.Oxunma_tarixi).toLocaleString() : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSummary(data) {
+      let totalWeight = 0;
+      let totalCount = data.length;
+      let breakdown = {}; // { type: { count, weight } }
+      data.forEach(item => {
+        const weight = parseFloat(item["Çəki"]) || 0;
+        totalWeight += weight;
+        const type = item["Növü"] ? item["Növü"].toLowerCase() : "bilinməyən";
+        if (!breakdown[type]) {
+          breakdown[type] = { count: 0, weight: 0 };
+        }
+        breakdown[type].count += 1;
+        breakdown[type].weight += weight;
+      });
+      document.getElementById('totalWeight').innerText = totalWeight.toFixed(2);
+      document.getElementById('totalCount').innerText = totalCount;
+
+      const breakdownBody = document.getElementById('breakdownBody');
+      breakdownBody.innerHTML = "";
+      for (const type in breakdown) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${type.toUpperCase()}</td>
+          <td>${breakdown[type].count}</td>
+          <td>${breakdown[type].weight.toFixed(2)}</td>
+        `;
+        breakdownBody.appendChild(row);
       }
     }
 
@@ -107,24 +237,8 @@
           return item.Növü && item.Növü.toLowerCase() === filterType;
         });
       }
-      renderReportTable(filteredData);
-    }
-
-    function renderReportTable(data) {
-      const tbody = document.querySelector('#reportTable tbody');
-      tbody.innerHTML = "";
-      data.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${item["Çəki"]}</td>
-          <td>${item["Növü"]}</td>
-          <td>${item["Tay_nömrəsi"]}</td>
-          <td>${item["Sıra"]}</td>
-          <td>${item.Oxunma_tarixi ? new Date(item.Oxunma_tarixi).toLocaleString() : ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      renderTable(filteredData);
+      renderSummary(filteredData);
     }
 
     document.getElementById('searchBtn').addEventListener('click', filterReport);
