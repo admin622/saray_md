@@ -214,7 +214,7 @@
       <button id="loginBtn" class="btn btn-primary">Daxil ol</button>
     </div>
   </div>
-
+  
   <!-- Header: Sol: Hesabat Səhifəsi button, Ortada: Başlıq, Sağ: Sidebar toggle -->
   <div class="header">
     <a href="hesabat.html" class="btn-header">Hesabat Səhifəsi</a>
@@ -240,7 +240,7 @@
       <button class="menu-item" data-target="reportContent">Hesabat</button>
       <button class="menu-item" data-target="securityContent">Təhlükəsizlik</button>
       <button class="menu-item" data-target="helpContent">Kömək</button>
-      <button class="menu-item exit-btn" id="exitSidebar">Bağla</button>
+      <button class="menu-item exit-btn" id="exitSidebar">Çıxış</button>
     </div>
     <div class="sidebar-content">
       <!-- Oxunan Kodlar Bölməsi -->
@@ -350,7 +350,7 @@
     // Lokal yaddaş və dəyişənlər
     let scannedCodes = [];
     let bookshelf = JSON.parse(localStorage.getItem('unreadBooks')) || [];
-    // Biz "Tay_nömrəsi" dəyərini BR kodundan götürəcəyik, ona görə auto-increment etməyəcəyik.
+    // Biz "Tay_nömrəsi" dəyərini BR koddakı kimi saxlayırıq, ona görə auto-increment etmirik.
     
     const toastEl = document.getElementById('toast');
     const sidebarEl = document.getElementById('sidebar');
@@ -393,7 +393,7 @@
       localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
     }
     
-    // Offline queue üçün pendingQueue
+    // Pending queue funksiyaları (offline sinxronizasiya üçün)
     function addToQueue(data) {
       let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
       queue.push(data);
@@ -411,7 +411,16 @@
       }
     }
     
-    // Sidebar-nın məzmununu render edən funksiya (hesabat, breakdown və s.)
+    // JSONBin‑ə məlumat göndərən funksiya
+    async function sendDataToJSONBin(data) {
+      if(navigator.onLine) {
+        await updateJSONBin(data);
+      } else {
+        addToQueue(data);
+      }
+    }
+    
+    // Sidebar-nın məzmununu render edən funksiya
     function renderSidebar() {
       const tbody = document.getElementById('sidebarList');
       tbody.innerHTML = "";
@@ -459,15 +468,6 @@
           `;
           breakdownBody.appendChild(row);
         }
-      }
-    }
-    
-    // JSONBin‑ə məlumat göndərən funksiya (əgər offline olarsa, növbəyə əlavə et)
-    async function sendDataToJSONBin(data) {
-      if(navigator.onLine) {
-        await updateJSONBin(data);
-      } else {
-        addToQueue(data);
       }
     }
     
@@ -532,7 +532,7 @@
       const data = {
         "Çəki": parts[0],
         "Növü": parts[1],
-        "Tay_nömrəsi": parts[2],  // BR koddakı "Tay nömrəsi" dəyəri saxlanılır
+        "Tay_nömrəsi": parts[2], // BR koddakı dəyəri saxlayırıq
         "Sıra": parts[3],
         "Oxunma_tarixi": new Date().toISOString()
       };
@@ -547,7 +547,7 @@
       renderSidebar();
     }
     
-    // Məlumatı yaddaşa əlavə edən funksiya (auto-increment yox, BR koddakı "Tay nömrəsi" istifadə olunur)
+    // Məlumatı yaddaşa əlavə edən funksiya (BR koddakı "Tay nömrəsi" dəyişməz qalır)
     function save(data) {
       bookshelf.unshift(data);
     }
