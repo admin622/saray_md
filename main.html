@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR Kod Oxutma Sistemi</title>
+  <title>BR kod oxutma sistemi</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
   <!-- QuaggaJS kitabxanası -->
@@ -15,15 +15,16 @@
       background: #f0f2f5;
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
       animation: fadeIn 0.8s ease-in;
     }
     @keyframes fadeIn {
       from { opacity: 0; }
-      to   { opacity: 1; }
+      to { opacity: 1; }
     }
-    /* Header dizaynı */
+    /* Header */
     .header {
-      background: linear-gradient(45deg, #8A2387, #E94057, #F27121);
+      background: linear-gradient(45deg, #4A90E2, #50E3C2);
       color: #fff;
       padding: 15px 20px;
       display: flex;
@@ -34,13 +35,12 @@
     .header h1 {
       margin: 0;
       font-size: 1.8rem;
-      text-align: center;
       flex-grow: 1;
+      text-align: center;
     }
-    .header .sidebar-toggle,
-    .header .report-btn {
+    .header .btn-header {
       background: #fff;
-      color: #E94057;
+      color: #4A90E2;
       border: none;
       padding: 10px 15px;
       border-radius: 5px;
@@ -48,13 +48,9 @@
       cursor: pointer;
       transition: transform 0.3s, background 0.3s;
     }
-    .header .sidebar-toggle:hover,
-    .header .report-btn:hover {
+    .header .btn-header:hover {
       transform: scale(1.05);
-      background: #f8f8f8;
-    }
-    .header .report-btn {
-      text-decoration: none;
+      background: #f0f0f0;
     }
     /* Scanner konteyneri */
     .scanner-container {
@@ -62,7 +58,7 @@
       max-width: 400px;
       height: 300px;
       margin: 30px auto;
-      border: 3px solid #E94057;
+      border: 3px solid #4A90E2;
       border-radius: 15px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -70,7 +66,7 @@
     }
     @keyframes zoomIn {
       from { transform: scale(0.8); opacity: 0; }
-      to   { transform: scale(1); opacity: 1; }
+      to { transform: scale(1); opacity: 1; }
     }
     #interactive {
       width: 100%;
@@ -81,7 +77,7 @@
     .scan-btn {
       display: block;
       margin: 20px auto;
-      background: #E94057;
+      background: #4A90E2;
       color: #fff;
       border: none;
       padding: 15px 30px;
@@ -91,7 +87,7 @@
       transition: background 0.3s, transform 0.3s;
     }
     .scan-btn:hover {
-      background: #F27121;
+      background: #50E3C2;
       transform: scale(1.05);
     }
     /* Toast mesajları */
@@ -111,21 +107,57 @@
     .toast.show {
       opacity: 1;
     }
-    /* Mobil üçün uyğunlaşma */
+    /* Sidebar (sol tərəfdə deyil, istədiyiniz kimi – burda header sol hissəsində “Hesabat Səhifəsi” buttonu var, sidebar isə sağ tərəfdə) */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -260px;
+      width: 260px;
+      max-height: 100vh;
+      background: #fff;
+      border-left: 3px solid #4A90E2;
+      box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+      transition: right 0.3s ease-in-out;
+      z-index: 950;
+      overflow-y: auto;
+    }
+    .sidebar.open {
+      right: 0;
+    }
+    .sidebar h5 {
+      background: #4A90E2;
+      color: #fff;
+      padding: 10px;
+      margin: 0;
+      text-align: center;
+    }
+    .sidebar table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .sidebar th, .sidebar td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    /* Mobil uyğunlaşma */
     @media (max-width: 600px) {
       .scanner-container { height: 200px; }
       .header h1 { font-size: 1.5rem; }
-      .header .sidebar-toggle, .header .report-btn { padding: 8px 12px; font-size: 0.9rem; }
+      .header .btn-header { padding: 8px 12px; font-size: 0.9rem; }
       .scan-btn { font-size: 1rem; padding: 12px 25px; }
+      .sidebar { width: 220px; right: -240px; }
+      .sidebar.open { right: 0; }
     }
   </style>
 </head>
 <body>
-  <!-- Header: sol - sidebar toggle, ortada başlıq, sağ - hesabat səhifəsi -->
+  <!-- Header: Sol: Hesabat Səhifəsi, Ortada: Başlıq, Sağ: Sidebar toggle -->
   <div class="header">
-    <button id="sidebarToggle" class="sidebar-toggle">&#9776;</button>
-    <h1>BR Kod Oxutma Sistemi</h1>
-    <a href="hesabat.html" class="report-btn">Hesabat Səhifəsi</a>
+    <a href="hesabat.html" class="btn-header">Hesabat Səhifəsi</a>
+    <h1>BR kod oxutma sistemi</h1>
+    <button id="sidebarToggle" class="btn-header">&#9776;</button>
   </div>
   
   <!-- Scanner paneli -->
@@ -139,21 +171,22 @@
   <!-- Toast mesajı -->
   <div id="toast" class="toast"></div>
   
-  <!-- Sidebar (collapsible) -->
-  <div id="sidebar" class="sidebar" style="position: fixed; top: 0; left: -260px; width: 250px; max-height: 100vh; background: #fff; border-right: 3px solid #E94057; box-shadow: 2px 0 12px rgba(0,0,0,0.2); transition: left 0.3s;">
-    <h5 style="background: #E94057; color: #fff; padding: 10px; margin: 0; text-align: center;">Oxunan Kodlar</h5>
-    <table style="width: 100%; border-collapse: collapse;">
+  <!-- Sidebar: Oxunan BR kodların siyahısı (tarix və saat da göstərilir) -->
+  <div id="sidebar" class="sidebar">
+    <h5>Oxunan Kodlar</h5>
+    <table>
       <thead>
         <tr>
-          <th style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">#</th>
-          <th style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">Çəki</th>
-          <th style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">Növü</th>
-          <th style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">Tay</th>
-          <th style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">Sıra</th>
+          <th>#</th>
+          <th>Çəki</th>
+          <th>Növü</th>
+          <th>Tay</th>
+          <th>Sıra</th>
+          <th>Tarix-Saat</th>
         </tr>
       </thead>
       <tbody id="sidebarList">
-        <!-- Oxunan kodlar burada -->
+        <!-- Oxunan kodlar burada əlavə olunacaq -->
       </tbody>
     </table>
   </div>
@@ -182,13 +215,12 @@
       }, 3000);
     }
     
-    // Sidebar toggle
+    // Sidebar toggle funksiyası
     sidebarToggle.addEventListener('click', () => {
-      // Toggle left position
-      if (sidebarEl.style.left === "0px") {
-        sidebarEl.style.left = "-260px";
+      if (sidebarEl.classList.contains('open')) {
+        sidebarEl.classList.remove('open');
       } else {
-        sidebarEl.style.left = "0px";
+        sidebarEl.classList.add('open');
       }
     });
     
@@ -198,18 +230,21 @@
       localStorage.setItem('lastTayNumber', lastTayNumber);
     }
     
-    // Sidebar siyahısını render edən funksiya
+    // Sidebar siyahısını render edən funksiya (tarix və saat daxil olmaqla)
     function renderSidebar() {
       const tbody = document.getElementById('sidebarList');
       tbody.innerHTML = "";
       bookshelf.forEach((item, index) => {
+        const dt = new Date(item["Oxunma_tarixi"]);
+        const formattedDT = dt.toLocaleString();
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">${index + 1}</td>
-          <td style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">${item["Çəki"]}</td>
-          <td style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">${item["Növü"]}</td>
-          <td style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">${item["Tay_nömrəsi"]}</td>
-          <td style="border: 1px solid #ddd; padding: 5px; font-size: 0.8rem;">${item["Sıra"]}</td>
+          <td>${index + 1}</td>
+          <td>${item["Çəki"]}</td>
+          <td>${item["Növü"]}</td>
+          <td>${item["Tay_nömrəsi"]}</td>
+          <td>${item["Sıra"]}</td>
+          <td style="font-size:0.7rem;">${formattedDT}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -279,7 +314,7 @@
       Quagga.stop();
     }
     
-    // Skan edildikdə emal funksiyası – format: "Çəki|Növü|Tay nömrəsi|Sıra"
+    // Skan edildikdə emal edən funksiya (gözlənilən format: "Çəki|Növü|Tay nömrəsi|Sıra")
     function onDetected(result) {
       let code = result.codeResult.code.trim();
       if (code.indexOf('|') === -1 && code.indexOf('/') !== -1) {
@@ -321,7 +356,7 @@
       bookshelf.unshift(data);
     }
     
-    // Düymə hadisəsi: "BR kod oxut" düyməsi skan prosesini başladır
+    // "BR kod oxut" düyməsinin klik hadisəsi
     document.getElementById('scanBtn').addEventListener('click', () => {
       startScanner();
       showToast('Oxunma başlayır...');
