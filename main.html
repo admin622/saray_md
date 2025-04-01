@@ -3,19 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR kod oxutma sistemi</title>
+  <title>BR kod oxutma sistemi - Genişləndirilmiş</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
   <!-- QuaggaJS kitabxanası -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
-    /* Sadə və təmiz dizayn */
+    /* Global stillər və animasiyalar */
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       background: #f0f2f5;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      overflow-x: hidden;
+      animation: fadeIn 0.8s ease-in;
     }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* Header */
+    .header {
+      background: linear-gradient(45deg, #4A90E2, #50E3C2);
+      color: #fff;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      flex-grow: 1;
+      text-align: center;
+    }
+    .header .btn-header {
+      background: #fff;
+      color: #4A90E2;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .header .btn-header:hover {
+      transform: scale(1.05);
+      background: #f0f0f0;
+    }
+    /* Scanner konteyneri */
     .scanner-container {
       width: 90%;
       max-width: 400px;
@@ -25,12 +62,18 @@
       border-radius: 15px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: zoomIn 0.8s ease-out;
+    }
+    @keyframes zoomIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
     #interactive {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+    /* BR kod oxut düyməsi */
     .scan-btn {
       display: block;
       margin: 20px auto;
@@ -47,6 +90,7 @@
       background: #50E3C2;
       transform: scale(1.05);
     }
+    /* Toast mesajları */
     .toast {
       position: fixed;
       top: 80px;
@@ -63,9 +107,121 @@
     .toast.show {
       opacity: 1;
     }
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      right: -350px;
+      width: 350px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+      transition: right 0.3s ease-in-out;
+      z-index: 950;
+      overflow-y: auto;
+    }
+    .sidebar.open {
+      right: 0;
+    }
+    .sidebar .menu {
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(45deg, #FF416C, #FF4B2B);
+    }
+    .sidebar .menu button {
+      background: transparent;
+      color: #fff;
+      border: none;
+      padding: 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    .sidebar .menu button:hover,
+    .sidebar .menu button.active {
+      background: rgba(255,255,255,0.2);
+    }
+    .sidebar .menu .exit-btn {
+      background: #fff;
+      color: #FF416C;
+      margin: 10px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .sidebar-content {
+      padding: 15px;
+    }
+    .sidebar-content > div {
+      display: none;
+    }
+    .sidebar-content > div.active {
+      display: block;
+    }
+    .sidebar table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    .sidebar th, .sidebar td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+    /* Responsive */
+    @media (max-width: 600px) {
+      .scanner-container { height: 200px; }
+      .header h1 { font-size: 1.5rem; }
+      .header .btn-header { padding: 8px 12px; font-size: 0.9rem; }
+      .scan-btn { font-size: 1rem; padding: 12px 25px; }
+      .sidebar { width: 300px; right: -320px; }
+      .sidebar.open { right: 0; }
+    }
+    /* Login Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content">
+      <h2>Giriş</h2>
+      <p>Zəhmət olmasa, sistemə daxil olun.</p>
+      <input type="text" id="username" placeholder="İstifadəçi adı" class="form-control my-2">
+      <input type="password" id="password" placeholder="Şifrə" class="form-control my-2">
+      <button id="loginBtn" class="btn btn-primary">Daxil ol</button>
+    </div>
+  </div>
+
+  <!-- Header: Sol: Hesabat Səhifəsi button, Ortada: Başlıq, Sağ: Sidebar toggle -->
+  <div class="header">
+    <a href="hesabat.html" class="btn-header">Hesabat Səhifəsi</a>
+    <h1>BR kod oxutma sistemi</h1>
+    <button id="sidebarToggle" class="btn-header">&#9776;</button>
+  </div>
+  
   <!-- Scanner Paneli -->
   <div class="scanner-container">
     <div id="interactive" class="viewport"></div>
@@ -77,19 +233,130 @@
   <!-- Toast mesajı -->
   <div id="toast" class="toast"></div>
   
+  <!-- Sidebar: Menyu və Məzmun Bölmələri -->
+  <div id="sidebar" class="sidebar">
+    <div class="menu">
+      <button class="menu-item active" data-target="scannedContent">Oxunan Kodlar</button>
+      <button class="menu-item" data-target="reportContent">Hesabat</button>
+      <button class="menu-item" data-target="securityContent">Təhlükəsizlik</button>
+      <button class="menu-item" data-target="helpContent">Kömək</button>
+      <button class="menu-item exit-btn" id="exitSidebar">Çıxış</button>
+    </div>
+    <div class="sidebar-content">
+      <!-- Oxunan Kodlar Bölməsi -->
+      <div id="scannedContent" class="active">
+        <h5>Oxunan Kodlar</h5>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Çəki</th>
+              <th>Növü</th>
+              <th>Tay</th>
+              <th>Sıra</th>
+              <th>Tarix-Saat</th>
+            </tr>
+          </thead>
+          <tbody id="sidebarList">
+            <!-- Kodlar burada əlavə olunacaq -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Hesabat Bölməsi -->
+      <div id="reportContent">
+        <h5>Hesabat</h5>
+        <p><strong>Ümumi Çəki:</strong> <span id="totalWeight">0</span> kg</p>
+        <p><strong>Ümumi Tay:</strong> <span id="totalCount">0</span> ədəd</p>
+        <h6>Növ üzrə Hesabat:</h6>
+        <table>
+          <thead>
+            <tr>
+              <th>Növ</th>
+              <th>Ədəd</th>
+              <th>Çəki (kg)</th>
+            </tr>
+          </thead>
+          <tbody id="breakdownBody">
+            <!-- Breakdown məlumatları -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Təhlükəsizlik Bölməsi -->
+      <div id="securityContent">
+        <h5>Təhlükəsizlik Təlimatı</h5>
+        <p>
+          <strong>Anbarın təhlükəsizlik qaydaları:</strong><br>
+          - Hər zaman qoruyucu geyim və avadanlıqlar istifadə edin.<br>
+          - Yanğınsöndürən vasitələr, təxliyə planı və təhlükəsizlik tədbirləri hər kəsə məlum olmalıdır.<br>
+          - Ərazilərdə ciddi nəzarət və giriş qeydiyyatı aparılır.<br>
+          - Təhlükəsizlik tədbirləri daim yenilənir və işçilərə mütəmadi təlimlər keçirilir.<br>
+          - Təcili vəziyyətlərdə dərhal rəhbərliklə əlaqə saxlayın.<br>
+          - Giriş-çıxış qaydalarına ciddi əməl edin.
+        </p>
+      </div>
+      <!-- Kömək Bölməsi -->
+      <div id="helpContent">
+        <h5>Kömək və Təlimat</h5>
+        <p>
+          <strong>Sistem haqqında:</strong><br>
+          - Bu sistem BR kod oxutma funksiyası ilə işləyir. Oxunan kodlar avtomatik yaddaşa və JSONBin‑ə göndərilir.<br>
+          - Sidebar vasitəsilə oxunan kodların siyahısını, hesabatı, təhlükəsizlik təlimatlarını və kömək məlumatlarını görə bilərsiniz.<br>
+          - Offline rejimdə işləyir; məlumatlar yerli yaddaşda saxlanılır və əlaqə bərpa olduqda sinxronizasiya edilir.<br>
+          - Giriş zamanı təhlükəsizlik tədbirləri tətbiq olunur.<br>
+          - Əgər hər hansı problem yaranarsa, toast mesajları vasitəsilə bildiriş alacaqsınız.
+        </p>
+      </div>
+    </div>
+  </div>
+  
   <script>
-    /* JSONBin parametrləri */
+    // Giriş Modal funksionallığı
+    function showLoginModal() {
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+    function hideLoginModal() {
+      document.getElementById('loginModal').style.display = 'none';
+    }
+    document.getElementById('loginBtn').addEventListener('click', function() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      // Dummy validation: username "admin", password "1234"
+      if(username === "admin" && password === "1234") {
+        localStorage.setItem('loggedIn', 'true');
+        hideLoginModal();
+        showToast('Xoş gəldiniz, admin!');
+      } else {
+        showToast('Giriş uğursuz, yenidən cəhd edin.');
+      }
+    });
+    if(localStorage.getItem('loggedIn') !== 'true') {
+      showLoginModal();
+    }
+    
+    // Offline/Online dəstək
+    window.addEventListener('offline', () => {
+      showToast('Offline rejimdədir, məlumatlar yerli yaddaşda saxlanılır.');
+    });
+    window.addEventListener('online', () => {
+      showToast('İnternet bağlantısı bərpa olundu.');
+    });
+    
+    // JSONBin parametrləri
     const JSONBIN_BIN_ID = '67cea66d8a456b7966731212';
     const JSONBIN_API_KEY = '$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq';
     const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
     
-    /* Lokal dəyişənlər */
-    let scannedCodes = []; // Səhifə yüklənməsində sıfırlanır
+    // Lokal yaddaş və dəyişənlər
+    let scannedCodes = [];
     let bookshelf = JSON.parse(localStorage.getItem('unreadBooks')) || [];
+    let lastTayNumber = parseInt(localStorage.getItem('lastTayNumber')) || 0;
     
-    /* Toast mesajı funksiyası */
+    const toastEl = document.getElementById('toast');
+    const sidebarEl = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    
+    // Toast mesajı funksiyası
     function showToast(message) {
-      const toastEl = document.getElementById('toast');
       toastEl.innerText = message;
       toastEl.classList.add('show');
       setTimeout(() => {
@@ -97,12 +364,87 @@
       }, 3000);
     }
     
-    /* LocalStorage güncəllənməsi */
+    // Sidebar menyu funksionallığı
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+      item.addEventListener('click', function() {
+        if(this.id === 'exitSidebar') {
+          sidebarEl.classList.remove('open');
+          return;
+        }
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        this.classList.add('active');
+        const target = this.getAttribute('data-target');
+        document.querySelectorAll('.sidebar-content > div').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(target).classList.add('active');
+      });
+    });
+    
+    // Sidebar toggle
+    sidebarToggle.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+    });
+    
+    // LocalStorage güncəllənməsi
     function updateLocalStorage() {
       localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
+      localStorage.setItem('lastTayNumber', lastTayNumber);
     }
     
-    /* JSONBin‑ə məlumat göndərən funksiya */
+    // Sidebar-nın məzmununu render edən funksiya (hesabat, breakdown və s.)
+    function renderSidebar() {
+      const tbody = document.getElementById('sidebarList');
+      tbody.innerHTML = "";
+      let totalWeight = 0;
+      let totalCount = bookshelf.length;
+      let breakdown = {}; // { type: { count, weight } }
+      bookshelf.forEach((item, index) => {
+        totalWeight += parseFloat(item["Çəki"]) || 0;
+        let type = item["Növü"] ? item["Növü"].toLowerCase() : "bilinməyən";
+        if(!breakdown[type]) {
+          breakdown[type] = { count: 0, weight: 0 };
+        }
+        breakdown[type].count += 1;
+        breakdown[type].weight += parseFloat(item["Çəki"]) || 0;
+    
+        const dt = new Date(item["Oxunma_tarixi"]);
+        const formattedDT = dt.toLocaleString();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item["Çəki"]}</td>
+          <td>${item["Növü"]}</td>
+          <td>${item["Tay_nömrəsi"]}</td>
+          <td>${item["Sıra"]}</td>
+          <td>${formattedDT}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    
+      // Hesabat hissəsi (reportContent) yenilənir
+      const totalWeightEl = document.getElementById('totalWeight');
+      const totalCountEl = document.getElementById('totalCount');
+      if(totalWeightEl) totalWeightEl.innerText = totalWeight.toFixed(2);
+      if(totalCountEl) totalCountEl.innerText = totalCount;
+    
+      const breakdownBody = document.getElementById('breakdownBody');
+      if(breakdownBody) {
+        breakdownBody.innerHTML = "";
+        for(const type in breakdown) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${type.toUpperCase()}</td>
+            <td>${breakdown[type].count}</td>
+            <td>${breakdown[type].weight.toFixed(2)}</td>
+          `;
+          breakdownBody.appendChild(row);
+        }
+      }
+    }
+    
+    // JSONBin‑ə məlumat göndərən funksiya
     async function updateJSONBin(data) {
       try {
         const response = await fetch(JSONBIN_URL + '/latest', {
@@ -125,31 +467,7 @@
       }
     }
     
-    /* Məlumatı göndər: onlayn olduqda JSONBin‑ə, offline olduqda pendingQueue‑yə əlavə edir */
-    async function sendDataToJSONBin(data) {
-      if (navigator.onLine) {
-        await updateJSONBin(data);
-      } else {
-        let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
-        queue.push(data);
-        localStorage.setItem('pendingQueue', JSON.stringify(queue));
-        showToast("Offline: məlumat növbəyə əlavə olundu");
-      }
-    }
-    
-    /* Offline sinxronizasiyası: online olduqda pendingQueue‑dəki məlumatları göndərir */
-    async function syncPendingQueue() {
-      let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
-      if(queue.length > 0) {
-        for (const data of queue) {
-          await updateJSONBin(data);
-        }
-        localStorage.removeItem('pendingQueue');
-        showToast("Növbədəki məlumatlar sinxronizasiya olundu");
-      }
-    }
-    
-    /* QuaggaJS ilə skan funksiyası */
+    // QuaggaJS ilə skan funksiyası
     function startScanner() {
       Quagga.init({
         inputStream: {
@@ -190,7 +508,7 @@
       Quagga.stop();
     }
     
-    /* Skan edildikdə emal edən funksiya – format: "Çəki|Növü|Tay nömrəsi|Sıra" */
+    // Skan edildikdə emal edən funksiya – format: "Çəki|Növü|Tay nömrəsi|Sıra"
     function onDetected(result) {
       let code = result.codeResult.code.trim();
       if (code.indexOf('|') === -1 && code.indexOf('/') !== -1) {
@@ -201,14 +519,7 @@
         showToast('BR kod yalnış format!');
         return;
       }
-      // Hem scannedCodes, hem də bookshelf (localStorage) üzərində yoxlama aparırıq
-      const alreadyScanned = bookshelf.some(item =>
-        item["Çəki"] === parts[0] &&
-        item["Növü"] === parts[1] &&
-        item["Tay_nömrəsi"] === parts[2] &&
-        item["Sıra"] === parts[3]
-      );
-      if (scannedCodes.includes(code) || alreadyScanned) {
+      if (scannedCodes.includes(code)) {
         showToast('Bu BR kod artıq oxunub!');
         return;
       }
@@ -217,7 +528,7 @@
       const data = {
         "Çəki": parts[0],
         "Növü": parts[1],
-        "Tay_nömrəsi": parts[2],  // BR koddakı "Tay nömrəsi" dəyəri saxlanır
+        "Tay_nömrəsi": parts[2],
         "Sıra": parts[3],
         "Oxunma_tarixi": new Date().toISOString()
       };
@@ -225,52 +536,33 @@
       showToast('BR kod uğurla oxunuldu!');
       save(data);
       updateLocalStorage();
-      sendDataToJSONBin(data).then(() => {
-        showToast('Məlumat JSONBin yaddaşa əlavə olundu!');
+      updateJSONBin(data).then(() => {
+        showToast('JSONBin yaddaşa əlavə olundu!');
       });
       stopScanner();
       renderSidebar();
     }
     
-    /* Məlumatı yaddaşa əlavə edən funksiya */
+    // Məlumatı yaddaşa əlavə edən funksiya
     function save(data) {
+      lastTayNumber++;
+      data["Tay_nömrəsi"] = lastTayNumber;
       bookshelf.unshift(data);
     }
     
-    /* "BR kod oxut" düyməsinin klik hadisəsi */
+    // "BR kod oxut" düyməsinin klik hadisəsi
     document.getElementById('scanBtn').addEventListener('click', () => {
       startScanner();
       showToast('Oxunma başlayır...');
     });
     
-    /* Offline/Online hadisələri */
+    // Offline/Online hadisələri
     window.addEventListener('offline', () => {
       showToast('Offline rejimdədir, məlumatlar yerli yaddaşda saxlanılır.');
     });
     window.addEventListener('online', () => {
       showToast('İnternet bağlantısı bərpa olundu.');
-      syncPendingQueue();
     });
-    
-    /* Sadə render funksiyası: məsələn, konsola və ya sidebar-a məlumatı göstərmək */
-    function renderSidebar() {
-      const tbody = document.getElementById('sidebarList');
-      tbody.innerHTML = "";
-      bookshelf.forEach((item, index) => {
-        const dt = new Date(item["Oxunma_tarixi"]);
-        const formattedDT = dt.toLocaleString();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${item["Çəki"]}</td>
-          <td>${item["Növü"]}</td>
-          <td>${item["Tay_nömrəsi"]}</td>
-          <td>${item["Sıra"]}</td>
-          <td>${formattedDT}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
     
     // İlkin render
     renderSidebar();
