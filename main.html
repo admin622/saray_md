@@ -3,90 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR Kod Oxuma</title>
+  <title>BR Kod Oxuma - Main</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
   <!-- QuaggaJS (BR kod oxumaq üçün) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
+      font-family: 'Arial', sans-serif;
+      background: #f8f9fa;
+      margin: 0;
       padding: 20px;
     }
     .header {
+      background: linear-gradient(135deg, #007bff, #00aaff);
+      color: #fff;
+      padding: 20px;
+      border-radius: 15px;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
-    /* Kamera konteyneri – masaüstü və mobil üçün uyğun ölçüdə */
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 5px;
+    }
+    .header p {
+      font-size: 1.2rem;
+      margin: 0;
+    }
     .scanner-container {
       width: 100%;
       max-width: 400px;
-      height: 300px; /* Masaüstü üçün sabit hündürlük */
+      height: 300px; /* Masaüstü üçün */
       margin: 0 auto 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border: 2px solid #007bff;
+      border-radius: 15px;
       overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     #interactive {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    .btn-custom {
+    .btn-group {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .btn-group button {
       margin: 5px;
     }
     .result {
-      margin: 15px auto;
-      padding: 10px;
       background: #fff;
       border: 1px solid #007bff;
-      border-radius: 5px;
-      white-space: pre-wrap;
-      text-align: left;
+      border-radius: 15px;
+      padding: 15px;
       max-width: 400px;
+      margin: 0 auto 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: left;
     }
-    /* Oxunan BR kodların siyahısı */
+    .result h5 {
+      margin-bottom: 10px;
+    }
     .scanned-table {
       background: #fff;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      max-width: 100%;
-      overflow-x: auto;
+      border: 2px solid #007bff;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    .scanned-table h5 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .scanned-table table {
+      width: 100%;
+    }
+    .scanned-table th {
+      background: #007bff;
+      color: #fff;
+      text-align: center;
+    }
+    .scanned-table td {
+      text-align: center;
     }
     @media (max-width: 600px) {
       .scanner-container {
-        width: 100%;
-        height: 200px; /* Mobil üçün hündürlük azaldılır */
+        height: 200px;
       }
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h2>BR Kod Oxuma</h2>
-    <a href="hesabat.html" class="btn btn-sm btn-secondary">Hesabat Səhifəsinə Keçid</a>
+    <h1>BR Kod Oxuma</h1>
+    <p>Məlumatlar avtomatik yaddaşa və JSONBin‑ə göndərilir</p>
+    <a href="hesabat.html" class="btn btn-light btn-sm mt-3">Hesabat Səhifəsinə Keçid</a>
   </div>
-
-  <!-- BR kod oxuma paneli -->
+  
+  <!-- Scanner paneli -->
   <div class="scanner-container">
     <div id="interactive" class="viewport"></div>
   </div>
-  <div class="text-center">
-    <button id="startScan" class="btn btn-primary btn-custom">Oxunmanı Başlat</button>
-    <button id="stopScan" class="btn btn-danger btn-custom" style="display:none;">Oxunmanı Dayandır</button>
+  
+  <div class="btn-group">
+    <button id="startScan" class="btn btn-primary">Oxunmanı Başlat</button>
+    <button id="stopScan" class="btn btn-danger" style="display:none;">Oxunmanı Dayandır</button>
   </div>
-
-  <!-- Oxunan məlumatın göstərildiyi panel -->
+  
+  <!-- Nəticə paneli -->
   <div id="resultDisplay" class="result" style="display:none;">
     <h5>Oxunan Məlumat:</h5>
     <p id="infoText"></p>
   </div>
-
-  <!-- Oxunan BR kodların siyahısı -->
-  <div class="scanned-table container mt-4">
-    <h5 class="text-center">Oxunan BR Kodlar</h5>
+  
+  <!-- Oxunan BR kodlar cədvəli -->
+  <div class="scanned-table container">
+    <h5>Oxunan BR Kodlar</h5>
     <table class="table table-bordered table-sm">
       <thead>
         <tr>
@@ -103,23 +138,22 @@
       </tbody>
     </table>
   </div>
-
+  
   <script>
     // JSONBin parametrləri
     const JSONBIN_BIN_ID = '67cea66d8a456b7966731212';
     const JSONBIN_API_KEY = '$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq';
     const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
-
-    // Lokal olaraq saxlanılan qeydlər
+    
+    // Lokal yaddaş
     let scannedCodes = [];
     let bookshelf = JSON.parse(localStorage.getItem('unreadBooks')) || [];
     let lastTayNumber = parseInt(localStorage.getItem('lastTayNumber')) || 0;
-
+    
     window.onload = function() {
       renderScannedList();
     };
-
-    // JSONBin‑ə məlumat göndərən funksiya (cavabları konsola log edirik)
+    
     async function updateJSONBin(data) {
       try {
         const response = await fetch(JSONBIN_URL + '/latest', {
@@ -128,7 +162,7 @@
         const json = await response.json();
         let currentData = json.record || [];
         currentData.push(data);
-        const updateResponse = await fetch(JSONBIN_URL, {
+        await fetch(JSONBIN_URL, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -136,14 +170,12 @@
           },
           body: JSON.stringify(currentData)
         });
-        const updateJson = await updateResponse.json();
-        console.log('JSONBin update success:', updateJson);
+        console.log('JSONBin update success:', data);
       } catch (error) {
         console.error('JSONBin update error:', error);
       }
     }
-
-    // QuaggaJS ilə BR kod oxuyucusunu işə salan funksiya (optimizə olunub)
+    
     function startScanner() {
       Quagga.init({
         inputStream: {
@@ -181,14 +213,13 @@
       });
       Quagga.onDetected(onDetected);
     }
-
+    
     function stopScanner() {
       Quagga.stop();
       document.getElementById('startScan').style.display = 'inline-block';
       document.getElementById('stopScan').style.display = 'none';
     }
-
-    // BR kod oxunduqda emal edən funksiya (gözlənilən format: "Çəki|Növü|Tay nömrəsi|Sıra")
+    
     function onDetected(result) {
       let code = result.codeResult.code.trim();
       if (code.indexOf('|') === -1 && code.indexOf('/') !== -1) {
@@ -213,21 +244,16 @@
         "Oxunma_tarixi": new Date().toISOString()
       };
       
-      // Nəticəni ekranda göstəririk
       document.getElementById('infoText').innerText =
         `Çəki: ${data["Çəki"]} kg\nNövü: ${data["Növü"]}\nTay nömrəsi: ${data["Tay_nömrəsi"]}\nSıra: ${data["Sıra"]}`;
       document.getElementById('resultDisplay').style.display = 'block';
       
-      // Lokal yaddaşa əlavə et və JSONBin‑ə göndər
       save(data);
       updateJSONBin(data);
-      
-      // Kameranı dayandırırıq və siyahını yeniləyirik (Yönləndirmə çıxarıldı)
       stopScanner();
       renderScannedList();
     }
-
-    // Məlumatı yerli yaddaşa əlavə edir və lastTayNumber yenilənir
+    
     function save(data) {
       lastTayNumber++;
       data["Tay_nömrəsi"] = lastTayNumber;
@@ -235,8 +261,7 @@
       localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
       localStorage.setItem('lastTayNumber', lastTayNumber);
     }
-
-    // Oxunan BR kodların siyahısını cədvəl şəklində göstərən funksiya
+    
     function renderScannedList() {
       const tbody = document.getElementById('scannedListBody');
       tbody.innerHTML = "";
@@ -253,8 +278,7 @@
         tbody.appendChild(tr);
       });
     }
-
-    // Düymə hadisələri
+    
     document.getElementById('startScan').addEventListener('click', startScanner);
     document.getElementById('stopScan').addEventListener('click', stopScanner);
   </script>
