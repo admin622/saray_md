@@ -20,7 +20,7 @@
     }
     @keyframes fadeIn {
       from { opacity: 0; }
-      to { opacity: 1; }
+      to   { opacity: 1; }
     }
     /* Header */
     .header {
@@ -107,15 +107,14 @@
     .toast.show {
       opacity: 1;
     }
-    /* Sidebar (sol tərəfdə deyil, istədiyiniz kimi – burda header sol hissəsində “Hesabat Səhifəsi” buttonu var, sidebar isə sağ tərəfdə) */
+    /* Sidebar */
     .sidebar {
       position: fixed;
       top: 0;
-      right: -260px;
-      width: 260px;
-      max-height: 100vh;
+      right: -320px;
+      width: 320px;
+      height: 100%;
       background: #fff;
-      border-left: 3px solid #4A90E2;
       box-shadow: -2px 0 12px rgba(0,0,0,0.2);
       transition: right 0.3s ease-in-out;
       z-index: 950;
@@ -124,16 +123,47 @@
     .sidebar.open {
       right: 0;
     }
-    .sidebar h5 {
-      background: #4A90E2;
+    .sidebar .menu {
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(45deg, #FF416C, #FF4B2B);
+    }
+    .sidebar .menu button {
+      background: transparent;
       color: #fff;
-      padding: 10px;
-      margin: 0;
+      border: none;
+      padding: 15px;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    .sidebar .menu button:hover,
+    .sidebar .menu button.active {
+      background: rgba(255,255,255,0.2);
+    }
+    .sidebar .menu .exit-btn {
+      background: #fff;
+      color: #FF416C;
+      margin: 10px;
+      border-radius: 5px;
       text-align: center;
     }
+    .sidebar-content {
+      padding: 15px;
+    }
+    .sidebar-content > div {
+      display: none;
+    }
+    .sidebar-content > div.active {
+      display: block;
+    }
+    /* Sidebar table */
     .sidebar table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 10px;
     }
     .sidebar th, .sidebar td {
       border: 1px solid #ddd;
@@ -141,13 +171,13 @@
       font-size: 0.8rem;
       text-align: center;
     }
-    /* Mobil uyğunlaşma */
+    /* Responsive */
     @media (max-width: 600px) {
       .scanner-container { height: 200px; }
       .header h1 { font-size: 1.5rem; }
       .header .btn-header { padding: 8px 12px; font-size: 0.9rem; }
       .scan-btn { font-size: 1rem; padding: 12px 25px; }
-      .sidebar { width: 220px; right: -240px; }
+      .sidebar { width: 270px; right: -290px; }
       .sidebar.open { right: 0; }
     }
   </style>
@@ -160,7 +190,7 @@
     <button id="sidebarToggle" class="btn-header">&#9776;</button>
   </div>
   
-  <!-- Scanner paneli -->
+  <!-- Scanner Paneli -->
   <div class="scanner-container">
     <div id="interactive" class="viewport"></div>
   </div>
@@ -171,24 +201,67 @@
   <!-- Toast mesajı -->
   <div id="toast" class="toast"></div>
   
-  <!-- Sidebar: Oxunan BR kodların siyahısı (tarix və saat da göstərilir) -->
+  <!-- Sidebar: Menyu və məzmun bölmələri -->
   <div id="sidebar" class="sidebar">
-    <h5>Oxunan Kodlar</h5>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Çəki</th>
-          <th>Növü</th>
-          <th>Tay</th>
-          <th>Sıra</th>
-          <th>Tarix-Saat</th>
-        </tr>
-      </thead>
-      <tbody id="sidebarList">
-        <!-- Oxunan kodlar burada əlavə olunacaq -->
-      </tbody>
-    </table>
+    <div class="menu">
+      <button class="menu-item active" data-target="scannedContent">Oxunan Kodlar</button>
+      <button class="menu-item" data-target="reportContent">Hesabat</button>
+      <button class="menu-item" data-target="securityContent">Təhlükəsizlik</button>
+      <button class="menu-item exit-btn" id="exitSidebar">Çıxış</button>
+    </div>
+    <div class="sidebar-content">
+      <!-- Oxunan Kodlar Məzmunu -->
+      <div id="scannedContent" class="active">
+        <h5>Oxunan Kodlar</h5>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Çəki</th>
+              <th>Növü</th>
+              <th>Tay</th>
+              <th>Sıra</th>
+              <th>Tarix-Saat</th>
+            </tr>
+          </thead>
+          <tbody id="sidebarList">
+            <!-- Kodlar burada əlavə olunacaq -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Hesabat Məzmunu -->
+      <div id="reportContent">
+        <h5>Hesabat</h5>
+        <p><strong>Ümumi Çəki:</strong> <span id="totalWeight">0</span> kg</p>
+        <p><strong>Ümumi Tay:</strong> <span id="totalCount">0</span> ədəd</p>
+        <h6>Növ üzrə Hesabat:</h6>
+        <table>
+          <thead>
+            <tr>
+              <th>Növ</th>
+              <th>Ədəd</th>
+              <th>Çəki (kg)</th>
+            </tr>
+          </thead>
+          <tbody id="breakdownBody">
+            <!-- Breakdown məlumatları -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Təhlükəsizlik Məzmunu -->
+      <div id="securityContent">
+        <h5>Təhlükəsizlik Təlimatı</h5>
+        <p>
+          <strong>Anbarın təhlükəsizlik qaydaları:</strong><br>
+          - Həmişə qoruyucu geyim və avadanlıqlar istifadə edin.<br>
+          - Yanğınsöndürən vasitələr, təxliyə planı və təhlükəsizlik tədbirləri hər kəsə məlum olmalıdır.<br>
+          - Ərazilərdə ciddi nəzarət və giriş qeydiyyatı aparılır.<br>
+          - Təhlükəsizlik tədbirləri daim yenilənir və işçilərə mütəmadi təlimlər keçirilir.<br>
+          - Hər hansı təcili vəziyyətdə dərhal rəhbərliklə əlaqə saxlayın.<br>
+          - Əlavə olaraq, anbarın giriş-çıxış qaydalarına ciddi əməl edin və qeyri-qanuni fəaliyyətlərdən uzaq durun.
+        </p>
+      </div>
+    </div>
   </div>
   
   <script>
@@ -206,7 +279,7 @@
     const sidebarEl = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     
-    // Toast mesajı funksiyası
+    // Toast funksiyası
     function showToast(message) {
       toastEl.innerText = message;
       toastEl.classList.add('show');
@@ -215,13 +288,27 @@
       }, 3000);
     }
     
-    // Sidebar toggle funksiyası
+    // Sidebar menyu funksionallığı
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+      item.addEventListener('click', function() {
+        if (this.id === 'exitSidebar') {
+          sidebarEl.classList.remove('open');
+          return;
+        }
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        this.classList.add('active');
+        const target = this.getAttribute('data-target');
+        document.querySelectorAll('.sidebar-content > div').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(target).classList.add('active');
+      });
+    });
+    
+    // Sidebar toggle
     sidebarToggle.addEventListener('click', () => {
-      if (sidebarEl.classList.contains('open')) {
-        sidebarEl.classList.remove('open');
-      } else {
-        sidebarEl.classList.add('open');
-      }
+      sidebarEl.classList.toggle('open');
     });
     
     // LocalStorage güncəllənməsi
@@ -230,11 +317,22 @@
       localStorage.setItem('lastTayNumber', lastTayNumber);
     }
     
-    // Sidebar siyahısını render edən funksiya (tarix və saat daxil olmaqla)
+    // Sidebar-nın məzmununu render edən funksiya
     function renderSidebar() {
       const tbody = document.getElementById('sidebarList');
       tbody.innerHTML = "";
+      let totalWeight = 0;
+      let totalCount = bookshelf.length;
+      let breakdown = {}; // { type: { count, weight } }
       bookshelf.forEach((item, index) => {
+        totalWeight += parseFloat(item["Çəki"]) || 0;
+        let type = item["Növü"] ? item["Növü"].toLowerCase() : "bilinməyən";
+        if (!breakdown[type]) {
+          breakdown[type] = { count: 0, weight: 0 };
+        }
+        breakdown[type].count += 1;
+        breakdown[type].weight += parseFloat(item["Çəki"]) || 0;
+    
         const dt = new Date(item["Oxunma_tarixi"]);
         const formattedDT = dt.toLocaleString();
         const tr = document.createElement('tr');
@@ -244,10 +342,28 @@
           <td>${item["Növü"]}</td>
           <td>${item["Tay_nömrəsi"]}</td>
           <td>${item["Sıra"]}</td>
-          <td style="font-size:0.7rem;">${formattedDT}</td>
+          <td>${formattedDT}</td>
         `;
         tbody.appendChild(tr);
       });
+    
+      // Hesabat hissəsini də yeniləyirik (reportContent)
+      document.getElementById('totalWeight').innerText = totalWeight.toFixed(2);
+      document.getElementById('totalCount').innerText = totalCount;
+    
+      const breakdownBody = document.getElementById('breakdownBody');
+      if (breakdownBody) {
+        breakdownBody.innerHTML = "";
+        for (const type in breakdown) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${type.toUpperCase()}</td>
+            <td>${breakdown[type].count}</td>
+            <td>${breakdown[type].weight.toFixed(2)}</td>
+          `;
+          breakdownBody.appendChild(row);
+        }
+      }
     }
     
     // JSONBin‑ə məlumat göndərən funksiya
@@ -314,7 +430,7 @@
       Quagga.stop();
     }
     
-    // Skan edildikdə emal edən funksiya (gözlənilən format: "Çəki|Növü|Tay nömrəsi|Sıra")
+    // Skan edildikdə emal edən funksiya – format: "Çəki|Növü|Tay nömrəsi|Sıra"
     function onDetected(result) {
       let code = result.codeResult.code.trim();
       if (code.indexOf('|') === -1 && code.indexOf('/') !== -1) {
@@ -330,7 +446,7 @@
         return;
       }
       scannedCodes.push(code);
-      
+    
       const data = {
         "Çəki": parts[0],
         "Növü": parts[1],
@@ -338,7 +454,7 @@
         "Sıra": parts[3],
         "Oxunma_tarixi": new Date().toISOString()
       };
-      
+    
       showToast('BR kod uğurla oxunuldu!');
       save(data);
       updateLocalStorage();
