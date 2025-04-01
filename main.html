@@ -141,7 +141,7 @@
       }
     }
 
-    // QuaggaJS ilə BR kod oxuyucusunu işə salan funksiya (tezlik artırılıb)
+    // QuaggaJS ilə BR kod oxuyucusunu işə salan funksiya (optimizə olunub)
     function startScanner() {
       Quagga.init({
         inputStream: {
@@ -155,11 +155,19 @@
           }
         },
         decoder: {
-          readers: ["code_128_reader"]
+          readers: ["code_128_reader"],
+          // Əlavə debug parametrlərini aktivləşdirə bilərsiniz
+          debug: {
+            drawBoundingBox: false,
+            showFrequency: false,
+            drawScanline: false
+          }
         },
         locate: true,
         numOfWorkers: navigator.hardwareConcurrency || 4,
-        singleChannel: true
+        singleChannel: true, // Qara-ağ işləmə, sürət artırır
+        halfSample: false,
+        patchSize: "medium"
       }, function(err) {
         if (err) {
           console.error(err);
