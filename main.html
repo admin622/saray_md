@@ -3,65 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR Kod Oxuma - Main</title>
+  <title>BR kod oxuma</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
-  <!-- QuaggaJS -->
+  <!-- QuaggaJS kitabxanası -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
-    /* Ümumi stil */
+    /* Global stillər və animasiyalar */
     body {
-      font-family: 'Helvetica Neue', sans-serif;
-      background: #f0f2f5;
+      font-family: 'Arial', sans-serif;
+      background: #eef2f3;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      overflow-x: hidden;
       animation: fadeIn 1s ease-in;
     }
     @keyframes fadeIn {
       from { opacity: 0; }
       to   { opacity: 1; }
     }
-    /* Başlıq */
+    /* Header */
     .header {
       background: linear-gradient(135deg, #ff416c, #ff4b2b);
       color: #fff;
-      padding: 30px;
-      border-radius: 15px;
+      padding: 20px;
+      position: relative;
       text-align: center;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-      margin-bottom: 30px;
-      animation: slideDown 1s ease-out;
+      animation: slideDown 0.8s ease-out;
     }
     @keyframes slideDown {
-      from { transform: translateY(-50px); opacity: 0; }
+      from { transform: translateY(-20px); opacity: 0; }
       to   { transform: translateY(0); opacity: 1; }
     }
     .header h1 {
-      font-size: 2.8rem;
-      margin-bottom: 5px;
-    }
-    .header p {
-      font-size: 1.2rem;
       margin: 0;
+      font-size: 2.5rem;
     }
-    .header a.btn {
-      margin-top: 15px;
+    .header .report-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      color: #ff416c;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
       transition: transform 0.3s;
     }
-    .header a.btn:hover {
+    .header .report-btn:hover {
       transform: scale(1.05);
     }
     /* Scanner konteyneri */
     .scanner-container {
-      width: 100%;
+      width: 90%;
       max-width: 400px;
       height: 300px;
-      margin: 0 auto 20px;
+      margin: 30px auto;
       border: 3px solid #ff416c;
       border-radius: 15px;
       overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       animation: zoomIn 0.8s ease-out;
     }
     @keyframes zoomIn {
@@ -73,108 +76,135 @@
       height: 100%;
       object-fit: cover;
     }
-    /* Düymələr */
-    .btn-group {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .btn-group button {
-      margin: 5px;
-      transition: background 0.3s, transform 0.3s;
-    }
-    .btn-group button:hover {
-      transform: scale(1.05);
-    }
-    /* Nəticə paneli */
-    .result {
-      background: #fff;
-      border: 2px solid #ff416c;
-      border-radius: 15px;
-      padding: 20px;
-      max-width: 400px;
-      margin: 0 auto 30px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: left;
-      animation: fadeIn 0.8s ease-in;
-    }
-    .result h5 {
-      margin-bottom: 10px;
-      color: #ff4b2b;
-    }
-    /* Cədvəl */
-    .scanned-table {
-      background: #fff;
-      border: 3px solid #ff416c;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin-top: 20px;
-      animation: fadeIn 1s ease-in;
-    }
-    .scanned-table h5 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: #ff4b2b;
-    }
-    .scanned-table table {
-      width: 100%;
-    }
-    .scanned-table th {
+    /* Scan düyməsi */
+    .scan-btn {
+      display: block;
+      margin: 20px auto;
       background: #ff416c;
       color: #fff;
-      padding: 8px;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
     }
-    .scanned-table td {
-      padding: 8px;
+    .scan-btn:hover {
+      background: #ff4b2b;
+      transform: scale(1.05);
+    }
+    /* Toast mesajları */
+    .toast {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 15px 20px;
+      border-radius: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-in-out;
+      z-index: 1000;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    /* Sol alt collapsible sidebar */
+    .sidebar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 250px;
+      max-height: 80%;
+      background: #fff;
+      border: 3px solid #ff416c;
+      border-radius: 15px 15px 0 0;
+      box-shadow: 2px -2px 10px rgba(0,0,0,0.2);
+      overflow: auto;
+      transform: translateX(-230px);
+      transition: transform 0.3s ease-in-out;
+      z-index: 900;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .sidebar-toggle {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: #ff416c;
+      color: #fff;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 950;
+      transition: transform 0.3s;
+    }
+    .sidebar-toggle:hover {
+      transform: scale(1.1);
+    }
+    .sidebar h5 {
+      text-align: center;
+      padding: 10px;
+      margin: 0;
+      background: #ff416c;
+      color: #fff;
+    }
+    .sidebar table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .sidebar th, .sidebar td {
+      border: 1px solid #ddd;
+      padding: 5px;
+      font-size: 0.8rem;
       text-align: center;
     }
     @media (max-width: 600px) {
       .scanner-container { height: 200px; }
+      .sidebar { width: 200px; transform: translateX(-180px); }
+      .sidebar.open { transform: translateX(0); }
     }
   </style>
 </head>
 <body>
+  <!-- Header: Başlıq və hesabat səhifəsinə keçid -->
   <div class="header">
-    <h1>BR Kod Oxuma</h1>
-    <p>Məlumatlar avtomatik yaddaşa və JSONBin‑ə göndərilir</p>
-    <a href="hesabat.html" class="btn btn-light btn-sm mt-3">Hesabat Səhifəsinə Keçid</a>
+    <h1>BR kod oxuma</h1>
+    <a href="hesabat.html" class="report-btn">Hesabat Səhifəsi</a>
   </div>
   
-  <!-- Scanner paneli -->
+  <!-- Scanner konteyneri -->
   <div class="scanner-container">
     <div id="interactive" class="viewport"></div>
   </div>
   
-  <div class="btn-group">
-    <button id="startScan" class="btn btn-primary">Oxunmanı Başlat</button>
-    <button id="stopScan" class="btn btn-danger" style="display:none;">Oxunmanı Dayandır</button>
-  </div>
+  <!-- Mərkəzdə BR kod oxut düyməsi -->
+  <button id="scanBtn" class="scan-btn">BR kod oxut</button>
   
-  <!-- Nəticə paneli -->
-  <div id="resultDisplay" class="result" style="display:none;">
-    <h5>Oxunan Məlumat:</h5>
-    <p id="infoText"></p>
-  </div>
+  <!-- Toast mesajı (məlumat verəcək) -->
+  <div id="toast" class="toast"></div>
   
-  <!-- Oxunan BR kodlar cədvəli -->
-  <div class="scanned-table container">
+  <!-- Sol alt collapsible sidebar -->
+  <div id="sidebar" class="sidebar">
     <h5>Oxunan BR Kodlar</h5>
-    <table class="table table-bordered table-sm">
+    <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Çəki</th>
           <th>Növü</th>
-          <th>Tay nömrəsi</th>
+          <th>Tay</th>
           <th>Sıra</th>
-          <th>Tarix</th>
         </tr>
       </thead>
-      <tbody id="scannedListBody">
-        <!-- Avtomatik əlavə olunacaq -->
+      <tbody id="sidebarList">
+        <!-- Oxunan kodlar burada göstəriləcək -->
       </tbody>
     </table>
   </div>
+  <div id="sidebarToggle" class="sidebar-toggle">&#9776;</div>
   
   <script>
     // JSONBin parametrləri
@@ -182,15 +212,53 @@
     const JSONBIN_API_KEY = '$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq';
     const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
     
-    // Lokal yaddaş
+    // Lokal yaddaş və dəyişənlər
     let scannedCodes = [];
     let bookshelf = JSON.parse(localStorage.getItem('unreadBooks')) || [];
     let lastTayNumber = parseInt(localStorage.getItem('lastTayNumber')) || 0;
     
-    window.onload = function() {
-      renderScannedList();
-    };
+    const toastEl = document.getElementById('toast');
+    const sidebarEl = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
     
+    // Toast mesaj funksiyası
+    function showToast(message) {
+      toastEl.innerText = message;
+      toastEl.classList.add('show');
+      setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Sidebar toggle funksiyası
+    sidebarToggle.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+    });
+    
+    // LocalStorage güncəllənməsi
+    function updateLocalStorage() {
+      localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
+      localStorage.setItem('lastTayNumber', lastTayNumber);
+    }
+    
+    // Sidebar-da oxunan BR kodların siyahısını göstərmək
+    function renderSidebar() {
+      const tbody = document.getElementById('sidebarList');
+      tbody.innerHTML = "";
+      bookshelf.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item["Çəki"]}</td>
+          <td>${item["Növü"]}</td>
+          <td>${item["Tay_nömrəsi"]}</td>
+          <td>${item["Sıra"]}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    
+    // JSONBin‑ə məlumat göndərən funksiya
     async function updateJSONBin(data) {
       try {
         const response = await fetch(JSONBIN_URL + '/latest', {
@@ -213,6 +281,7 @@
       }
     }
     
+    // QuaggaJS ilə skan funksiyası
     function startScanner() {
       Quagga.init({
         inputStream: {
@@ -241,22 +310,19 @@
       }, function(err) {
         if (err) {
           console.error(err);
-          alert('Oxuyucu başlatılarkən xəta baş verdi.');
+          showToast('Oxuyucu başlatılarkən xəta!');
           return;
         }
         Quagga.start();
-        document.getElementById('startScan').style.display = 'none';
-        document.getElementById('stopScan').style.display = 'inline-block';
       });
       Quagga.onDetected(onDetected);
     }
     
     function stopScanner() {
       Quagga.stop();
-      document.getElementById('startScan').style.display = 'inline-block';
-      document.getElementById('stopScan').style.display = 'none';
     }
     
+    // Skan edildikdə emal funksiyası – gözlənilən format: "Çəki|Növü|Tay nömrəsi|Sıra"
     function onDetected(result) {
       let code = result.codeResult.code.trim();
       if (code.indexOf('|') === -1 && code.indexOf('/') !== -1) {
@@ -264,11 +330,11 @@
       }
       const parts = code.split('|').map(item => item.trim());
       if (parts.length < 4) {
-        alert('BR kod yalnış format!');
+        showToast('BR kod yalnış format!');
         return;
       }
       if (scannedCodes.includes(code)) {
-        alert('Bu BR kod artıq oxunub!');
+        showToast('Bu BR kod artıq oxunub!');
         return;
       }
       scannedCodes.push(code);
@@ -281,43 +347,31 @@
         "Oxunma_tarixi": new Date().toISOString()
       };
       
-      document.getElementById('infoText').innerText =
-        `Çəki: ${data["Çəki"]} kg\nNövü: ${data["Növü"]}\nTay nömrəsi: ${data["Tay_nömrəsi"]}\nSıra: ${data["Sıra"]}`;
-      document.getElementById('resultDisplay').style.display = 'block';
-      
+      showToast('BR kod uğurla oxunuldu!');
       save(data);
-      updateJSONBin(data);
+      updateLocalStorage();
+      updateJSONBin(data).then(() => {
+        showToast('JSONBin yaddaşa əlavə olundu!');
+      });
       stopScanner();
-      renderScannedList();
+      renderSidebar();
     }
     
+    // Məlumatı yaddaşa əlavə edən funksiya
     function save(data) {
       lastTayNumber++;
       data["Tay_nömrəsi"] = lastTayNumber;
       bookshelf.unshift(data);
-      localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
-      localStorage.setItem('lastTayNumber', lastTayNumber);
     }
     
-    function renderScannedList() {
-      const tbody = document.getElementById('scannedListBody');
-      tbody.innerHTML = "";
-      bookshelf.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${item["Çəki"]}</td>
-          <td>${item["Növü"]}</td>
-          <td>${item["Tay_nömrəsi"]}</td>
-          <td>${item["Sıra"]}</td>
-          <td>${item["Tarix"] ? item["Tarix"].replace(/-/g, '.') : new Date(item["Oxunma_tarixi"]).toISOString().split('T')[0].replace(/-/g, '.')}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+    // Düymə hadisəsi: "BR kod oxut" düyməsi skan prosesini başladır
+    document.getElementById('scanBtn').addEventListener('click', () => {
+      startScanner();
+      showToast('Oxunma başlayır...');
+    });
     
-    document.getElementById('startScan').addEventListener('click', startScanner);
-    document.getElementById('stopScan').addEventListener('click', stopScanner);
+    // İlkin render
+    renderSidebar();
   </script>
 </body>
 </html>
