@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR Kod Oxuma və JSONBin</title>
-  <!-- Bootstrap CSS (Responsive və şık dizayn üçün) -->
+  <title>BR Kod Oxuma və Çek Çap</title>
+  <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
-  <!-- QuaggaJS: Barcode scanning kitabxanası -->
+  <!-- QuaggaJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <!-- JsBarcode (Barcode yaradılması üçün) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,9 +20,9 @@
       margin-bottom: 20px;
     }
     .scanner-container {
-      position: relative;
       max-width: 400px;
       margin: 0 auto;
+      position: relative;
     }
     #interactive {
       width: 100%;
@@ -42,7 +44,11 @@
 </head>
 <body>
   <div class="container text-center">
-    <h1>BR Kod Oxuma və JSONBin Yaddaş</h1>
+    <h1>BR Kod Oxuma və Çek Çap</h1>
+    <!-- Hesabat səhifəsinə keçid üçün button -->
+    <a href="hesabat.html" class="btn btn-sm btn-light mb-3">Hesabat Səhifəsinə Keçid</a>
+    
+    <!-- BR kod oxuma paneli -->
     <div class="scanner-container">
       <div id="interactive" class="viewport"></div>
     </div>
@@ -51,113 +57,207 @@
       <button id="stopScan" class="btn btn-danger btn-custom" style="display:none;">Oxunmanı Dayandır</button>
     </div>
     <div id="resultDisplay" class="result" style="display:none;">
-      <h4>Oxunan məlumat:</h4>
+      <h4>Oxunan Məlumat:</h4>
       <p id="infoText"></p>
+    </div>
+    
+    <hr>
+    <!-- Çek çap edən proqramın formu (orijinal proqramdan götürülüb) -->
+    <div>
+      <h2>Çek Çap Formu</h2>
+      <form id="form">
+        <input type="hidden" name="id" id="inputBookId" />
+        <label for="inputBookTitle">Çəki:</label>
+        <input type="text" id="inputBookTitle" placeholder="Çəki (kg)" />
+        <label for="inputBookAuthor">Növü:</label>
+        <input type="text" id="inputBookAuthor" placeholder="Növü" />
+        <label for="inputBookYear">Tay nömrəsi (avtomatik):</label>
+        <input type="text" id="inputBookYear" readonly />
+        <label for="inputRow">Sıra:</label>
+        <input type="text" id="inputRow" placeholder="Sıra" />
+        <br><br>
+        <button type="button" onclick="printLabels(); save()">Çap et və Yaddaşda saxla</button>
+        <button class="btn btn-sm btn-primary" type="button" onclick="clearData()">Sıfırla</button>
+      </form>
     </div>
   </div>
 
   <script>
-    // JSONBin parametrləri
-    const JSONBIN_BIN_ID = '67cea66d8a456b7966731212';
-    const JSONBIN_API_KEY = '$2a$10$P/0Z.dlxFFcZIX9AkGeE3O/z1LmUXZVsTgc.BX/m.ofHOK.jsDVgq';
-    const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
+    let scannedCodes = []; // Təkrar oxunmanın qarşısını almaq üçün
 
-    let scannedCodes = []; // Oxunmuş kodları yadda saxlamaq üçün
-
-    // JSONBin-ə məlumat əlavə edən funksiya
-    async function updateJSONBin(data) {
-      try {
-        // Əvvəl mövcud məlumatları əldə edirik
-        const response = await fetch(JSONBIN_URL + '/latest', {
-          headers: { 'X-Master-Key': JSONBIN_API_KEY }
-        });
-        const json = await response.json();
-        let currentData = json.record || [];
-        // Yeni məlumatı əlavə edirik
-        currentData.push(data);
-        // JSONBin-i yeniləyirik
-        const updateResponse = await fetch(JSONBIN_URL, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
-          },
-          body: JSON.stringify(currentData)
-        });
-        const updateJson = await updateResponse.json();
-        console.log('JSONBin updated:', updateJson);
-      } catch (error) {
-        console.error('JSONBin update error:', error);
-      }
-    }
-
-    // Oxunan kod nəticəsinin emalı
+    // Oxunan kodun emal funksiyası – format: "Çəki|Növü|Tay nömrəsi|Sıra"
     function onDetected(result) {
       let code = result.codeResult.code;
-      // Təkrar oxunmanın qarşısını almaq
       if (scannedCodes.includes(code)) {
         alert('Bu BR kod artıq oxunub!');
         return;
       }
       scannedCodes.push(code);
-      // Koddakı məlumatların formatı: "Çəki|Tay_nömrəsi|Növü|Sıra"
       const parts = code.split('|');
-      if(parts.length < 4){
+      if (parts.length < 4) {
         alert('Yanlış formatda BR kod!');
         return;
       }
+      // Sıra: Çəki, Növü, Tay nömrəsi, Sıra
       const data = {
         "Çəki": parts[0],
-        "Tay_nömrəsi": parts[1],
-        "Növü": parts[2],
+        "Növü": parts[1],
+        "Tay_nömrəsi": parts[2],
         "Sıra": parts[3],
         "Oxunma_tarixi": new Date().toISOString()
       };
-      // Ekranda məlumatları göstəririk
+      // Nəticəni ekranda göstəririk
       document.getElementById('infoText').innerText =
-        `Çəki: ${data["Çəki"]} kg\nTay nömrəsi: ${data["Tay_nömrəsi"]}\nNövü: ${data["Növü"]}\nSıra: ${data["Sıra"]}`;
+        `Çəki: ${data["Çəki"]} kg\nNövü: ${data["Növü"]}\nTay nömrəsi: ${data["Tay_nömrəsi"]}\nSıra: ${data["Sıra"]}`;
       document.getElementById('resultDisplay').style.display = 'block';
-      // JSONBin‑ə məlumatı göndəririk
-      updateJSONBin(data);
+      // Çek çap formundakı inputlara məlumatı ötürürük
+      document.getElementById('inputBookTitle').value = data["Çəki"];
+      document.getElementById('inputBookAuthor').value = data["Növü"];
+      document.getElementById('inputBookYear').value = data["Tay_nömrəsi"];
+      document.getElementById('inputRow').value = data["Sıra"];
+      
+      // JSONBin‑ə göndərmə funksiyasını buraya əlavə etmək olar (əgər tələb olunarsa)
     }
 
-    // QuaggaJS ilə oxuyucunu işə salan funksiya
     function startScanner() {
       Quagga.init({
         inputStream : {
           name : "Live",
           type : "LiveStream",
           target: document.querySelector('#interactive'),
-          constraints: {
-            facingMode: "environment"
-          }
+          constraints: { facingMode: "environment" }
         },
         decoder : {
           readers : ["code_128_reader"]
         }
       }, function(err) {
-          if (err) {
-              console.error(err);
-              alert('Oxuyucu başlatılarkən xəta baş verdi.');
-              return;
-          }
-          Quagga.start();
-          document.getElementById('startScan').style.display = 'none';
-          document.getElementById('stopScan').style.display = 'inline-block';
+        if (err) {
+          console.error(err);
+          alert('Oxuyucu başlatılarkən xəta baş verdi.');
+          return;
+        }
+        Quagga.start();
+        document.getElementById('startScan').style.display = 'none';
+        document.getElementById('stopScan').style.display = 'inline-block';
       });
       Quagga.onDetected(onDetected);
     }
 
-    // Oxuyucunu dayandıran funksiya
     function stopScanner() {
       Quagga.stop();
       document.getElementById('startScan').style.display = 'inline-block';
       document.getElementById('stopScan').style.display = 'none';
     }
 
-    // Düymə hadisələri
     document.getElementById('startScan').addEventListener('click', startScanner);
     document.getElementById('stopScan').addEventListener('click', stopScanner);
+
+    // Aşağıdakı funksiyalar çek çap proqramından götürülüb:
+
+    let bookshelf = [];
+    let lastTayNumber = parseInt(localStorage.getItem('lastTayNumber')) || 0;
+    window.onload = function() {
+      loadBookshelfData();
+      setInterval(storeBookshelfData, 10000);
+    };
+
+    function loadBookshelfData() {
+      const unreadBooks = JSON.parse(localStorage.getItem('unreadBooks')) || [];
+      bookshelf = unreadBooks;
+      document.getElementById('inputBookYear').value = lastTayNumber + 1;
+    }
+
+    function storeBookshelfData() {
+      localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
+      localStorage.setItem('lastTayNumber', lastTayNumber);
+    }
+
+    function save() {
+      const index = document.getElementById('inputBookId').value;
+      const title = document.getElementById('inputBookTitle').value;
+      const author = document.getElementById('inputBookAuthor').value;
+      const row = document.getElementById('inputRow').value;
+      const currentDate = new Date();
+      const currentDateTime = currentDate.toISOString();
+      const dateOnly = currentDateTime.split('T')[0];
+      let year;
+      if (index) {
+        year = bookshelf[index].Tay_nömrəsi;
+      } else {
+        lastTayNumber++;
+        year = lastTayNumber;
+      }
+      const updatedBook = {
+        "Çəki": title,
+        "Növü": author,
+        "Tay_nömrəsi": year,
+        "Sıra": row,
+        "Tarix_və_saat": currentDateTime,
+        "Tarix": dateOnly
+      };
+      if (index) {
+        bookshelf[index] = updatedBook;
+      } else {
+        bookshelf.unshift(updatedBook);
+      }
+      storeBookshelfData();
+    }
+
+    function clearData() {
+      document.getElementById('inputBookId').value = '';
+      document.getElementById('inputBookTitle').value = '';
+      document.getElementById('inputBookAuthor').value = '';
+      document.getElementById('inputBookYear').value = lastTayNumber + 1;
+      document.getElementById('inputRow').value = '';
+    }
+
+    function printLabels() {
+      const title = document.getElementById("inputBookTitle").value.trim();
+      const author = document.getElementById("inputBookAuthor").value.trim();
+      const year = document.getElementById("inputBookYear").value.trim();
+      const row = document.getElementById("inputRow").value.trim();
+      const label1 = "Çəkisi: " + title + " kg";
+      const label2 = "Növü: " + author;
+      const label3 = "Tay nömrəsi: " + year;
+      const label4 = "Sıra: " + row;
+      const barcodeSVG = generateBarcodeSVG(year);
+      const printContents = `
+        <div style="width: 50mm; height: 60mm; border: 1px solid #ccc; padding: 5px; display: flex; flex-direction: column; justify-content: center;">
+          <p style="font-weight: bold; margin-bottom: 0.1px; font-size: 10px;">${label1}</p>
+          <p style="margin-bottom: 0.1px; font-size: 10px;">${label2}</p>
+          <p style="margin-bottom: 0.1px; font-size: 10px;">${label3}</p>
+          <p style="margin-bottom: 0.1px; font-size: 10px;">${label4}</p>
+          <div>${barcodeSVG}</div>
+          <p style="margin-bottom: 0.1px; font-size: 10px;">Firma-Zaqatala Agro</p>
+        </div>
+      `;
+      const popupWin = window.open("", "_blank", "width=300,height=250");
+      popupWin.document.open();
+      popupWin.document.write(`
+        <html>
+          <head>
+            <title>Print</title>
+            <style>
+              @media print {
+                @page { size: 50mm 60mm; }
+                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; }
+                div { width: 50mm; height: 60mm; }
+              }
+            </style>
+          </head>
+          <body onload="window.print();">
+            ${printContents}
+          </body>
+        </html>
+      `);
+      popupWin.document.close();
+    }
+
+    function generateBarcodeSVG(value) {
+      let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      JsBarcode(svg, value, { format: "CODE128", width: 2, height: 40, displayValue: true });
+      return svg.outerHTML;
+    }
   </script>
 </body>
 </html>
