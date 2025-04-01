@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BR kod oxutma sistemi - Genişləndirilmiş</title>
+  <title>BR kod oxutma sistemi</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css" rel="stylesheet">
   <!-- QuaggaJS kitabxanası -->
@@ -339,6 +339,7 @@
     });
     window.addEventListener('online', () => {
       showToast('İnternet bağlantısı bərpa olundu.');
+      syncPendingQueue();
     });
     
     // JSONBin parametrləri
@@ -349,7 +350,7 @@
     // Lokal yaddaş və dəyişənlər
     let scannedCodes = [];
     let bookshelf = JSON.parse(localStorage.getItem('unreadBooks')) || [];
-    let lastTayNumber = parseInt(localStorage.getItem('lastTayNumber')) || 0;
+    // Biz "Tay_nömrəsi" dəyərini BR kodundan götürəcəyik, ona görə auto-increment etməyəcəyik.
     
     const toastEl = document.getElementById('toast');
     const sidebarEl = document.getElementById('sidebar');
@@ -368,7 +369,7 @@
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
       item.addEventListener('click', function() {
-        if(this.id === 'exitSidebar') {
+        if(this.classList.contains('exit-btn')) {
           sidebarEl.classList.remove('open');
           return;
         }
@@ -390,7 +391,24 @@
     // LocalStorage güncəllənməsi
     function updateLocalStorage() {
       localStorage.setItem('unreadBooks', JSON.stringify(bookshelf));
-      localStorage.setItem('lastTayNumber', lastTayNumber);
+    }
+    
+    // Offline queue üçün pendingQueue
+    function addToQueue(data) {
+      let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
+      queue.push(data);
+      localStorage.setItem('pendingQueue', JSON.stringify(queue));
+      showToast("Offline: məlumat növbəyə əlavə olundu");
+    }
+    async function syncPendingQueue() {
+      let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
+      if(queue.length > 0) {
+        for(const data of queue) {
+          await updateJSONBin(data);
+        }
+        localStorage.removeItem('pendingQueue');
+        showToast("Növbədəki məlumatlar sinxronizasiya olundu");
+      }
     }
     
     // Sidebar-nın məzmununu render edən funksiya (hesabat, breakdown və s.)
@@ -444,26 +462,12 @@
       }
     }
     
-    // JSONBin‑ə məlumat göndərən funksiya
-    async function updateJSONBin(data) {
-      try {
-        const response = await fetch(JSONBIN_URL + '/latest', {
-          headers: { 'X-Master-Key': JSONBIN_API_KEY }
-        });
-        const json = await response.json();
-        let currentData = json.record || [];
-        currentData.push(data);
-        await fetch(JSONBIN_URL, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
-          },
-          body: JSON.stringify(currentData)
-        });
-        console.log('JSONBin update success:', data);
-      } catch (error) {
-        console.error('JSONBin update error:', error);
+    // JSONBin‑ə məlumat göndərən funksiya (əgər offline olarsa, növbəyə əlavə et)
+    async function sendDataToJSONBin(data) {
+      if(navigator.onLine) {
+        await updateJSONBin(data);
+      } else {
+        addToQueue(data);
       }
     }
     
@@ -528,7 +532,7 @@
       const data = {
         "Çəki": parts[0],
         "Növü": parts[1],
-        "Tay_nömrəsi": parts[2],
+        "Tay_nömrəsi": parts[2],  // BR koddakı "Tay nömrəsi" dəyəri saxlanılır
         "Sıra": parts[3],
         "Oxunma_tarixi": new Date().toISOString()
       };
@@ -536,17 +540,15 @@
       showToast('BR kod uğurla oxunuldu!');
       save(data);
       updateLocalStorage();
-      updateJSONBin(data).then(() => {
-        showToast('JSONBin yaddaşa əlavə olundu!');
+      sendDataToJSONBin(data).then(() => {
+        showToast('Məlumat JSONBin yaddaşa əlavə olundu!');
       });
       stopScanner();
       renderSidebar();
     }
     
-    // Məlumatı yaddaşa əlavə edən funksiya
+    // Məlumatı yaddaşa əlavə edən funksiya (auto-increment yox, BR koddakı "Tay nömrəsi" istifadə olunur)
     function save(data) {
-      lastTayNumber++;
-      data["Tay_nömrəsi"] = lastTayNumber;
       bookshelf.unshift(data);
     }
     
@@ -562,7 +564,19 @@
     });
     window.addEventListener('online', () => {
       showToast('İnternet bağlantısı bərpa olundu.');
+      syncPendingQueue();
     });
+    
+    async function syncPendingQueue() {
+      let queue = JSON.parse(localStorage.getItem('pendingQueue')) || [];
+      if(queue.length > 0) {
+        for(const data of queue) {
+          await updateJSONBin(data);
+        }
+        localStorage.removeItem('pendingQueue');
+        showToast("Növbədəki məlumatlar sinxronizasiya olundu");
+      }
+    }
     
     // İlkin render
     renderSidebar();
